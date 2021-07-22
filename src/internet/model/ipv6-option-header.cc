@@ -376,5 +376,168 @@ Ipv6OptionHeader::Alignment Ipv6OptionRouterAlertHeader::GetAlignment () const
   return (Alignment){ 2,0}; //2n+0
 }
 
+NS_OBJECT_ENSURE_REGISTERED (MplOptionHeader);
+
+TypeId MplOptionHeader::GetTypeId ()
+{
+  static TypeId tid = TypeId ("ns3::MplOptionHeader")
+        .SetParent<Ipv6OptionHeader> ()
+        .SetGroupName ("Internet")
+        .AddConstructor<MplOptionHeader>()
+  ;
+  return tid;
+}
+TypeId MplOptionHeader::GetInstanceTypeId () const
+{
+  return GetTypeId ();
+}
+
+MplOptionHeader::MplOptionHeader() : Ipv6OptionHeader()
+{
+  SetParams(SEED_16_BIT_ADDRESSING, false, 0, 0);
+}
+
+void MplOptionHeader::SetParams (AddressingModes S, bool M, uint8_t sequence, uint64_t optSeedID)
+{
+  SetType (0x6D);
+  m_seedID = optSeedID;
+  m_flags = (S << 6) | (M << 5);
+  m_sequence= sequence;
+
+  switch(S) // check the first 2 bits
+  {
+    case IPV6_ADDRESSING:  // no seedID included
+      SetLength (2);
+      m_seedID = 0;
+      break;
+    case SEED_16_BIT_ADDRESSING:  // 16-bit seedID
+      SetLength (4);
+      break;
+    case SEED_64_BIT_ADDRESSING:  // 64-bit seedID
+      SetLength (10);
+      break;
+    case SEED_128_BIT_ADDRESSING:
+    default:
+      // 128-bit seed-ID currently not supported
+      break;
+  }
+}
+
+
+MplOptionHeader::~MplOptionHeader ()
+{
+}
+
+
+uint8_t MplOptionHeader::GetS () const
+{
+  return m_flags >> 6;
+}
+
+uint8_t MplOptionHeader::GetSequence() const
+{
+  return m_sequence;
+}
+
+uint64_t MplOptionHeader::GetSeedID () const
+{
+  return m_seedID;
+}
+
+void MplOptionHeader::SetM(bool value)
+{
+  m_flags = value ? m_flags|(1 << 5) : m_flags&~(1<<5);
+}
+
+bool MplOptionHeader::GetM() const
+{
+  return m_flags&(0x20);
+}
+
+uint8_t MplOptionHeader::GetFlags() const
+{
+  return m_flags;
+}
+
+
+void MplOptionHeader::Print (std::ostream &os) const
+{
+  os << "( type = " << (uint32_t)GetType () << " length = " << (uint32_t)GetLength ()   << " S = " << (m_flags>>6) << " M = " << ((uint8_t)m_flags&(0x20)>>5) << " Sequence = " << m_sequence << " SeedID = " << m_seedID << " )";
+}
+
+uint32_t MplOptionHeader::GetSerializedSize () const
+{
+  return GetLength () + 2;
+}
+
+void MplOptionHeader::Serialize (Buffer::Iterator start) const
+{
+  Buffer::Iterator i = start;
+
+  i.WriteU8 (GetType ());
+  i.WriteU8 (GetLength ());
+  i.WriteU8 (m_flags);
+  i.WriteU8 (m_sequence);
+
+  switch((m_flags & 0xC0) >> 6) // check the first 2 bits
+  {
+    case 1:  // 16-bit seedID
+      i.WriteHtonU16(m_seedID);
+      break;
+    case 2:  // 64-bit seedID
+      i.WriteHtonU64(m_seedID);
+      break;
+    default:
+      // 128-bit seed-ID currently not supported
+      break;
+  }
+}
+
+uint32_t MplOptionHeader::Deserialize (Buffer::Iterator start)
+{
+  Buffer::Iterator i = start;
+
+  SetType (i.ReadU8 ());
+  SetLength (i.ReadU8 ());
+  m_flags = i.ReadU8 ();
+  m_sequence = i.ReadU8();
+
+  switch((m_flags & 0xC0) >> 6) // check the first 2 bits
+  {
+    case 1:  // 16-bit seedID
+      m_seedID = i.ReadNtohU16();
+      break;
+    case 2:  // 64-bit seedID
+      m_seedID = i.ReadNtohU64();
+      break;
+    default:
+      // 128-bit seed-ID currently not supported
+      break;
+  }
+
+  return GetSerializedSize ();
+}
+
+Ipv6OptionHeader::Alignment MplOptionHeader::GetAlignment () const
+{
+  switch((m_flags & 0xC0) >> 6) // check the first 2 bits
+  {
+    case 0:
+      return (Alignment) { 1, 4};
+      break;
+    case 1:  // 16-bit seedID
+      return (Alignment) { 1, 2};
+      break;
+    case 2:  // 64-bit seedID
+      return (Alignment) {1, 0};
+      break;
+    default:
+      // 128-bit seed-ID currently not supported
+      break;
+  }
+
+  return (Alignment){ 1,0};
+}
+
 } /* namespace ns3 */
 

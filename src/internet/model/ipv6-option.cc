@@ -235,5 +235,84 @@ uint8_t Ipv6OptionRouterAlert::Process (Ptr<Packet> packet, uint8_t offset, Ipv6
   return routerAlertHeader.GetSerializedSize ();
 }
 
+NS_OBJECT_ENSURE_REGISTERED (MplOption);
+
+TypeId MplOption::GetTypeId ()
+{
+  static TypeId tid = TypeId ("ns3::MplOption")
+    .SetParent<Ipv6Option> ()
+    .SetGroupName ("Internet")
+    .AddConstructor<MplOption> ()
+  ;
+  return tid;
+}
+
+MplOption::MplOption () : Ipv6Option()
+{
+}
+
+MplOption::~MplOption ()
+{
+}
+
+uint8_t MplOption::GetOptionNumber () const
+{
+  return OPT_NUMBER;
+}
+
+uint8_t MplOption::Process (Ptr<Packet> packet, uint8_t offset, Ipv6Header const& ipv6Header, bool& isDropped)
+{
+  Ptr<Packet> p = packet->Copy ();
+  p->RemoveAtStart (offset);
+
+  MplOptionHeader::AddressingModes mode = MplOptionHeader::SEED_16_BIT_ADDRESSING;
+  uint8_t addressing = 0;
+  bool mFlag = false;
+  uint8_t sequenceNr = 0;
+  uint64_t seedId = 0;
+
+  uint8_t data[20] = {0};
+  p->CopyData(data, 4);
+  addressing = data[2] >> 6;
+  mFlag = data[2] & 0x20 ? true : false;
+  sequenceNr = data[3];
+
+  switch(addressing)
+  {
+  case 0:
+    mode = MplOptionHeader::IPV6_ADDRESSING;
+    break;
+  case 1:
+    seedId = data[4] << 8 + data[5];
+    mode = MplOptionHeader::SEED_16_BIT_ADDRESSING;
+    break;
+  case 2:
+    for(uint8_t i = 4; i < 12; i++)
+    {
+      seedId <<= 8;
+      seedId += data[i];
+    }
+    mode = MplOptionHeader::SEED_64_BIT_ADDRESSING;
+    break;
+  case 3:
+    mode = MplOptionHeader::SEED_128_BIT_ADDRESSING;
+    //TODO
+      break;
+  }
+
+  m_mplOptionHeader.SetParams(mode, mFlag, sequenceNr, seedId);
+  p->RemoveHeader (m_mplOptionHeader);
+
+  isDropped = false;
+
+  return m_mplOptionHeader.GetSerializedSize ();
+}
+
+MplOptionHeader MplOption::GetOptionHeader()
+{
+  return m_mplOptionHeader;
+}
+
+
 } /* namespace ns3 */
 

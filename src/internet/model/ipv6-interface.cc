@@ -421,13 +421,15 @@ void Ipv6Interface::Send (Ptr<Packet> p, const Ipv6Header & hdr, Ipv6Address des
         }
       else
         {
-          NS_LOG_LOGIC ("NDISC Lookup");
-          found = icmpv6->Lookup (p, hdr, dest, GetDevice (), m_ndCache, &hardwareDestination);
+          //NS_LOG_LOGIC ("NDISC Lookup");
+          //found = icmpv6->Lookup (p, hdr, dest, GetDevice (), m_ndCache, &hardwareDestination);
+          found = true;
         }
 
       if (found)
         {
           NS_LOG_LOGIC ("Address Resolved.  Send.");
+          hardwareDestination = m_device->GetMulticast (dest);
           m_tc->Send (m_device, Create<Ipv6QueueDiscItem> (p, hardwareDestination, Ipv6L3Protocol::PROT_NUMBER, hdr));
         }
     }

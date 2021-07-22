@@ -31,6 +31,7 @@
 #include "ns3/buffer.h"
 #include "ns3/packet.h"
 #include "ns3/ipv6-address.h"
+#include "ns3/ipv6-option-header.h"
 
 namespace ns3
 {
@@ -278,6 +279,28 @@ public:
    */
   virtual uint8_t Process (Ptr<Packet> packet, uint8_t offset, Ipv6Header const& ipv6Header, bool& isDropped);
 };
+
+class MplOption : public Ipv6Option
+{
+public:
+
+  static const uint8_t OPT_NUMBER = 0x6D;
+
+  static TypeId GetTypeId ();
+
+  MplOption();
+  ~MplOption();
+
+  virtual uint8_t GetOptionNumber () const;
+
+  virtual uint8_t Process (Ptr<Packet> packet, uint8_t offset, Ipv6Header const& ipv6Header, bool& isDropped);
+
+  MplOptionHeader GetOptionHeader();
+
+private:
+  MplOptionHeader m_mplOptionHeader;
+};
+
 
 } /* namespace ns3 */
 

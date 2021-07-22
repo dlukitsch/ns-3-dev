@@ -420,6 +420,47 @@ private:
   uint16_t m_value;
 };
 
+class MplOptionHeader : public Ipv6OptionHeader
+{
+public:
+
+  enum AddressingModes
+  {
+    IPV6_ADDRESSING = 0,
+    SEED_16_BIT_ADDRESSING,
+    SEED_64_BIT_ADDRESSING,
+    SEED_128_BIT_ADDRESSING,
+  };
+
+  static TypeId GetTypeId ();
+  virtual TypeId GetInstanceTypeId () const;
+
+  MplOptionHeader ();
+  virtual ~MplOptionHeader ();
+
+  void SetParams(AddressingModes S, bool M, uint8_t sequence, uint64_t optSeedID);
+  uint8_t GetS () const;
+  uint8_t GetSequence() const;
+  uint64_t GetSeedID () const;
+  uint8_t GetFlags() const;
+
+  void SetM(bool value);
+  bool GetM() const;
+
+  virtual void Print (std::ostream &os) const;
+  virtual uint32_t GetSerializedSize () const;
+  virtual void Serialize (Buffer::Iterator start) const;
+  virtual uint32_t Deserialize (Buffer::Iterator start);
+  virtual Ipv6OptionHeader::Alignment GetAlignment () const;
+
+private:
+  uint8_t m_flags;
+  uint8_t m_sequence;
+
+  uint64_t m_seedID;
+};
+
+
 } // namespace ns3
 
 #endif /* IPV6_OPTION_HEADER_H */

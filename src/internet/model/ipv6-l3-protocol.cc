@@ -1509,11 +1509,14 @@ void Ipv6L3Protocol::RegisterOptions ()
   jumbogramOption->SetNode (m_node);
   Ptr<Ipv6OptionRouterAlert> routerAlertOption = CreateObject<Ipv6OptionRouterAlert> ();
   routerAlertOption->SetNode (m_node);
+  Ptr<MplOption> mplOption = CreateObject<MplOption> ();
+  mplOption->SetNode (m_node);
 
   ipv6OptionDemux->Insert (pad1Option);
   ipv6OptionDemux->Insert (padnOption);
   ipv6OptionDemux->Insert (jumbogramOption);
   ipv6OptionDemux->Insert (routerAlertOption);
+  ipv6OptionDemux->Insert (mplOption);
 
   m_node->AggregateObject (ipv6OptionDemux);
 }

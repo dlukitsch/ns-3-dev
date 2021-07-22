@@ -1488,8 +1488,8 @@ void Icmpv6L4Protocol::FunctionDadTimeout (Ipv6Interface* interface, Ipv6Address
           /* \todo Add random delays before sending RS
            * because all nodes start at the same time, there will be many of RS around 1 second of simulation time
            */
-          NS_LOG_LOGIC ("Scheduled a Router Solicitation");
-          Simulator::Schedule (Seconds (0.0), &Icmpv6L4Protocol::SendRS, this, ifaddr.GetAddress (), Ipv6Address::GetAllRoutersMulticast (), interface->GetDevice ()->GetAddress ());
+          //NS_LOG_LOGIC ("Scheduled a Router Solicitation");
+          //Simulator::Schedule (Seconds (0.0), &Icmpv6L4Protocol::SendRS, this, ifaddr.GetAddress (), Ipv6Address::GetAllRoutersMulticast (), interface->GetDevice ()->GetAddress ());
         }
       else
         {

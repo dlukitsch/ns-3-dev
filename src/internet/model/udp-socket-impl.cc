@@ -739,6 +739,14 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv6Address dest, uint16_t port)
   // provide an interface-specific route to these addresses such
   // that we can treat these multicast addresses as "not broadcast"
 
+  // TODO needed to make MPL working --> force usage of local-link for MPL
+  if(ipv6->GetRoutingProtocol()->GetInstanceTypeId().GetName() == "ns3::mpl::RoutingProtocol" ||
+     (ipv6->GetRoutingProtocol()->GetInstanceTypeId().GetName() == "ns3::Ipv6ListRouting") )
+  {
+    m_endPoint6->SetLocalAddress(m_node->GetObject<Ipv6>()->GetAddress(1, 0).GetAddress());
+    m_endPoint6->SetLocalPort(port);
+  }
+
   if (m_endPoint6->GetLocalAddress () != Ipv6Address::GetAny ())
     {
       m_udp->Send (p->Copy (), m_endPoint6->GetLocalAddress (), dest,
