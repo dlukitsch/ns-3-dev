@@ -7,6 +7,7 @@
 #include "ns3/statistics.h"
 #include "ns3/lr-wpan-net-device.h"
 #include "ns3/net-device-container.h"
+#include <fstream>
 
 namespace ns3 {
 
@@ -26,6 +27,8 @@ void StatisticsHelper::Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev)
   Ptr<Statistics> agent = m_agentFactory.Create<Statistics>();
   node->AggregateObject(agent);
 
+  agent->SetNodeId(node->GetId());
+
   Ptr<LrWpanPhy> phy = netDev->GetPhy();
   NS_ASSERT_MSG(phy, "ERROR: No LrWPAN Phy found!");
 
@@ -34,23 +37,65 @@ void StatisticsHelper::Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev)
 }
 
 
+std::string StatisticsHelper::PrintResults(Ptr<Node> node)
+{
+  Ptr<Statistics> stat = node->GetObject<Statistics>();
+  std::ostringstream oss;
+
+  if(stat)
+  {
+    oss << "Node: " << node->GetId() << std::endl;
+    oss << stat->GetResultString() << std::endl;
+  }
+
+  return oss.str();
+}
+
 std::string StatisticsHelper::PrintResults(NodeContainer nodes)
 {
   std::ostringstream oss;
   oss << std::endl;
 
-  // iterate over all the nodes, get the aggregated Statistics object and print its result values
   for(uint i = 0; i < nodes.GetN(); i++)
   {
-    Ptr<Statistics> stat = nodes.Get(i)->GetObject<Statistics>();
-    if(stat)
-    {
-      oss << "Node: " << i << std::endl;
-      oss << stat->GetResultString() << std::endl;
-    }
+    oss << PrintResults(nodes.Get(i));
   }
 
   return oss.str();
+}
+
+void StatisticsHelper::PrintResultsCsvStyle(Ptr<Node> node, std::string filename, bool printHeader, bool newFile)
+{
+  std::ofstream fileStream;
+  Ptr<Statistics> stat = node->GetObject<Statistics>();
+
+  if(newFile)
+  {
+    std::remove(filename.c_str());
+    fileStream.open(filename, std::ofstream::out);
+  }
+  else
+    fileStream.open(filename, std::ofstream::out | std::ofstream::app);
+
+  if(stat && fileStream.is_open())
+  {
+    if(printHeader)
+      fileStream << stat->GetCsvHeaderString() << std::endl;
+
+    fileStream << stat->GetCsvStyleString() << std::endl;
+  }
+
+  fileStream.close();
+}
+
+void StatisticsHelper::PrintResultsCsvStyle(NodeContainer nodes, std::string filename, bool printHeader, bool newFile)
+{
+  for(uint i = 0; i < nodes.GetN(); i++)
+  {
+    PrintResultsCsvStyle(nodes.Get(i), filename, printHeader, newFile);
+    newFile = false;
+    printHeader = false;
+  }
 }
 
 

@@ -96,6 +96,7 @@ int main (int argc, char **argv)
 
   std::string path = "./output/" + simName + "/" + simName;
   std::string animFile = path + ".xml";
+  std::string csvResults = path + ".csv";
 
   LogComponentEnable (filename.c_str(), LOG_LEVEL_ALL);
   LogComponentEnable ("CustomTopologyReader", LOG_LEVEL_ALL);
@@ -161,8 +162,10 @@ int main (int argc, char **argv)
   }
 
   lrWpanHelper.AssociateToPan (devContainer, 10);
-  lrWpanHelper.EnablePcap(path , panIDContainers[0], false); // enable pcap generation only for normal nodes
-  //lrWpanHelper.EnablePcapAll(path, true);
+  lrWpanHelper.EnablePcap(path , panIDContainers[0], true); // enable pcap generation only for normal nodes
+
+  AsciiTraceHelper ascii;
+  lrWpanHelper.EnableAsciiAll (ascii.CreateFileStream (path + ".tr"));
 
   /* Install IPv4/IPv6 stack */
   NS_LOG_INFO ("Install Internet stack.");
@@ -334,19 +337,17 @@ int main (int argc, char **argv)
   NS_LOG_INFO ("Extract the results from LrWPAN-Mac");
 
   // TODO filter after the PAN-ID extract the SeqTsHeader from the packet
-  // TODO extend the LrWpan module with some statistics-code
-  // TODO extract the results to their own files that can be interpreted with gnuplot
+  // TODO extract the results to their own files that can be interpreted with gnuplot/mathplot
 
-
-  //mac->GetStatistic() or phy Trace-Callbacks
   // percentage of control data vs. use-data
   // percentage of duplicated-use-data vs. new-use-data
-  // delay
+  // delay from sending to receiving (timestamp is inside of tseq-header)
   // reception percentage
   // num received/sent bytes/packets
   // Time of enabled RX/TX component
   // ...
   std::cout << statHelper.PrintResults(nodes);
+  statHelper.PrintResultsCsvStyle(nodes, csvResults, true, true);
 
   NS_LOG_INFO ("Done.");
 }

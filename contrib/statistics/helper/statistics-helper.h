@@ -20,7 +20,11 @@ class StatisticsHelper
 
     void Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev);
 
+    std::string PrintResults(Ptr<Node> node);
     std::string PrintResults(NodeContainer nodes);
+
+    void PrintResultsCsvStyle(Ptr<Node> node, std::string filename, bool printHeader, bool newFile);
+    void PrintResultsCsvStyle(NodeContainer nodes, std::string filename, bool printHeader, bool newFile);
 
     void Set (std::string name, const AttributeValue &value);
 

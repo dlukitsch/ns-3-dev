@@ -1,0 +1,2 @@
+Output Filename,Diagram Type,Diagram Value,Diagram Title,X Description,Y Description,ResultFile1,Legend1,ResultFile2,Legend2,ResultFile3,Legend3,ResultFile4,Legend4,ResultFile5,Legend5,ResultFile6,Legend6
+Compare,Bar,ts_succSentPackets,Successfully Sent Packets,Network Node IDs,# of Packets,ConstantPosition_Model_Std_Flooding,Flooding,ConstantPosition_Model_Std_Mpl,MPL,ConstantPosition_Model_Std_Flooding,Flooding,,,,,,

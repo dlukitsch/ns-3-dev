@@ -9,6 +9,12 @@
 namespace ns3 {
 
 
+typedef enum
+{
+  ReceivedAccepted,
+  SentAccepted,
+} InsertToMap;
+
 class Statistics :  public Object
 {
 public:
@@ -20,13 +26,105 @@ public:
   void InstallTraces(Ptr<LrWpanPhy> phy);
 
   std::string GetResultString();
+  std::string GetCsvStyleString();
+  std::string GetCsvHeaderString();
+
+  void SetNodeId(uint32_t nodeId);
 
 private:
+  uint32_t m_nodeId;
+
   uint m_numSentPackets;
+  uint m_sentBytes;
+  uint m_sentDataPackets;
+  uint m_sentDataBytes;
+  uint m_sentControlPackets;
+  uint m_sentControlBytes;
+
+  uint m_numSentDropPackets;
+  uint m_sentDropBytes;
+  uint m_sentDropDataPackets;
+  uint m_sentDropDataBytes;
+  uint m_sentDropControlPackets;
+  uint m_sentDropControlBytes;
+
   uint m_numRecPackets;
+  uint m_recBytes;
+  uint m_recDataPackets;
+  uint m_recDataBytes;
+  uint m_recControlPackets;
+  uint m_recControlBytes;
+
   uint m_numRxDropPackets;
+  uint m_rxDropBytes;
+  uint m_rxDropDataPackets;
+  uint m_rxDropDataBytes;
+  uint m_rxDropControlPackets;
+  uint m_rxDropControlBytes;
+
+  uint m_doubleSentPackets;
+  uint m_doubleSentBytes;
+
+  uint m_doubleSentDataPackets;
+  uint m_doubleSentDataBytes;
+  uint m_doubleSentControlPackets;
+  uint m_doubleSentControlBytes;
+
+  uint m_doubleRecPackets;
+  uint m_doubleRecBytes;
+
+  uint m_doubleRecDataPackets;
+  uint m_doubleRecDataBytes;
+  uint m_doubleRecControlPackets;
+  uint m_doubleRecControlBytes;
+
+  Time m_lastCall;
+
+  Time m_RxOn;
+  Time m_RxOff;
+  Time m_RxBusy;
+
+  Time m_TxOn;
+  Time m_TxOff;
+  Time m_TxBusy;
+
+  Time m_TxRxOff;
+
+  Time m_Idle;
+  Time m_Busy;
+
+  struct cmpPacket {
+      bool operator()(const Ptr<Packet>& a, const Ptr<Packet>& b) const
+      {
+        if(a->GetSize() != b->GetSize())
+          return false;
+
+        std::vector<uint8_t> vA, vB;
+        vA.resize(a->GetSize());
+        vB.resize(b->GetSize());
+        a->CopyData(&vA[0], a->GetSize());
+        b->CopyData(&vB[0], b->GetSize());
+
+        if(memcmp(&vA[0], &vB[0], vA.size()))
+          return false;
+
+        return true;
+      }
+  };
+
+  // store all the messages with their data content once, so that we have an history of previously handled messages
+  std::set<Ptr<Packet>, cmpPacket> m_sentAcceptedMessages;
+  std::set<Ptr<Packet>, cmpPacket> m_recAcceptedMessages;
+
+  bool TryToInsertPacket(Ptr<Packet> packet, InsertToMap insertToMap);
+  bool IsDataMessage(Ptr<Packet> packet);
+  bool CheckIfInterferenceMessage(Ptr<Packet> packet);
+
+  void TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpanPhyEnumeration newState);
 
   void TxEndTraceSink (Ptr<const Packet> packet);
+  void TxEndDropTraceSink (Ptr<const Packet> packet);
+
   void RxEndTraceSink (Ptr<const Packet> packet, double SINR);
   void RxEndDropTraceSink (Ptr<const Packet> packet);
 };
