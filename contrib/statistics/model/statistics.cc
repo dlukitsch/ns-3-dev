@@ -5,6 +5,7 @@
 #include "ns3/lr-wpan-net-device.h"
 #include "ns3/simulator.h"
 #include "ns3/lr-wpan-mac-header.h"
+#include <algorithm>
 
 NS_LOG_COMPONENT_DEFINE ("Statistics");
 
@@ -70,6 +71,12 @@ Statistics::Statistics()
   m_doubleRecControlPackets = 0;
   m_doubleRecControlBytes = 0;
 
+  m_newCompletedDataPackets = 0;
+  m_minTransmissionDelay = 0;
+  m_maxTransmissionDelay = 0;
+  m_varianceTransmissionDelay = 0;
+  m_medianTransmissionDelay = 0;
+
   m_lastCall = Seconds(0);
 
   m_RxOn = MicroSeconds(0);
@@ -134,6 +141,7 @@ void Statistics::TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpan
       m_TxOff += vTimeDiff;
       break;
     case IEEE_802_15_4_PHY_TRX_OFF:
+    case IEEE_802_15_4_PHY_FORCE_TRX_OFF:
       m_TxRxOff += vTimeDiff;
       m_RxOff += vTimeDiff;
       m_TxOff += vTimeDiff;
@@ -143,7 +151,7 @@ void Statistics::TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpan
       m_TxOn += vTimeDiff;
       break;
     default:
-      std::cout << "Strange OldState " << oldState  << " reached!" << std::endl;
+      NS_LOG_INFO("Strange OldState " << oldState  << " reached!");
   }
   m_lastCall = Now();
 }
@@ -185,7 +193,7 @@ void Statistics::TxEndTraceSink(Ptr<const Packet> packet)
   {
     m_sentDataBytes += copyPacket->GetSize();
     m_sentDataPackets++;
-    if(!TryToInsertPacket(copyPacket, SentAccepted))
+    if(!TryToInsertPacket(copyPacket))
     {
       m_doubleSentBytes += copyPacket->GetSize();
       m_doubleSentDataBytes += copyPacket->GetSize();
@@ -197,7 +205,7 @@ void Statistics::TxEndTraceSink(Ptr<const Packet> packet)
   {
     m_sentControlBytes += copyPacket->GetSize();
     m_sentControlPackets++;
-    if(!TryToInsertPacket(copyPacket, SentAccepted))
+    if(!TryToInsertPacket(copyPacket))
     {
       m_doubleSentBytes += copyPacket->GetSize();
       m_doubleSentControlBytes += copyPacket->GetSize();
@@ -216,24 +224,27 @@ void Statistics::RxEndTraceSink (Ptr<const Packet> packet, double SINR)
 
   m_numRecPackets++;
   m_recBytes += copyPacket->GetSize();
+  m_delayTimes.push_back(Simulator::Now().GetMilliSeconds() - packet->GetSendTimeStamp().GetMilliSeconds());
 
   if(IsDataMessage(copyPacket))
   {
     m_recDataBytes += copyPacket->GetSize();
     m_recDataPackets++;
-    if(!TryToInsertPacket(copyPacket, ReceivedAccepted))
+    if(!TryToInsertPacket(copyPacket))
     {
       m_doubleRecBytes += copyPacket->GetSize();
       m_doubleRecDataBytes += copyPacket->GetSize();
       m_doubleRecDataPackets++;
       m_doubleRecPackets++;
     }
+    else
+      m_newCompletedDataPackets++;
   }
   else
   {
     m_recControlBytes += copyPacket->GetSize();
     m_recControlPackets++;
-    if(!TryToInsertPacket(copyPacket, ReceivedAccepted))
+    if(!TryToInsertPacket(copyPacket))
     {
       m_doubleRecBytes += copyPacket->GetSize();
       m_doubleRecControlBytes += copyPacket->GetSize();
@@ -265,25 +276,13 @@ void Statistics::RxEndDropTraceSink (Ptr<const Packet> packet)
   }
 }
 
-bool Statistics::TryToInsertPacket(Ptr<Packet> packet, InsertToMap insertToMap)
+bool Statistics::TryToInsertPacket(Ptr<Packet> packet)
 {
-  switch(insertToMap)
-  {
-    case ReceivedAccepted:
-      if(m_recAcceptedMessages.find(packet) != m_recAcceptedMessages.end())
-      {
-        m_recAcceptedMessages.insert(packet->Copy());
-        return true;
-      }
-      break;
-    case SentAccepted:
-      if(m_sentAcceptedMessages.find(packet) != m_sentAcceptedMessages.end())
-      {
-        m_sentAcceptedMessages.insert(packet->Copy());
-        return true;
-      }
-      break;
-  }
+    if(m_messages.find(packet) == m_messages.end())
+    {
+      m_messages.insert(packet);
+      return true;
+    }
 
   return false;
 }
@@ -321,12 +320,38 @@ bool Statistics::CheckIfInterferenceMessage(Ptr<Packet> packet)
   return true;
 }
 
+void Statistics::CalculateDelayTimes()
+{
+  double var = 0;
+  double mean = 0;
+
+
+  for (auto& n : m_delayTimes)
+      mean += n;
+  mean /= m_delayTimes.size();
+
+  for(auto& n : m_delayTimes)
+    var += (n - mean) * (n - mean);
+
+   m_varianceTransmissionDelay = var / m_delayTimes.size();
+
+  std::sort(m_delayTimes.begin(), m_delayTimes.end());
+  if(m_delayTimes.size() != 0)
+  {
+    m_minTransmissionDelay = m_delayTimes.front();
+    m_maxTransmissionDelay = m_delayTimes.back();
+
+    if(m_delayTimes.size()%2)
+      m_medianTransmissionDelay = m_delayTimes[m_delayTimes.size()/2];
+    else
+      m_medianTransmissionDelay = (m_delayTimes[m_delayTimes.size()/2] + m_delayTimes[m_delayTimes.size()/2-1])/2;
+  }
+}
+
 
 std::string Statistics::GetResultString()
 {
   std::ostringstream res;
-
-  //TODO
 
   res << "NumSentPackets: " << m_numSentPackets << std::endl;
   res << "NumRecPackets: " << m_numRecPackets << std::endl;
@@ -392,6 +417,12 @@ std::string Statistics::GetCsvHeaderString()
   res << "Double Received Control-Packets" << ",";
   res << "Double Received Control-Bytes" << ",";
 
+  res << "Different Received Data Packets" << ",";
+  res << "Min Transmission Delay [ms]" << ",";
+  res << "Max Transmission Delay [ms]" << ",";
+  res << "Median Transmission Delay [ms]" << ",";
+  res << "Variance Transmission Delay [ms]" << ",";
+
   res << "Tx Off [ms]" << ",";
   res << "Tx On [ms]" << ",";
   res << "Tx Busy [ms]" << ",";
@@ -408,6 +439,8 @@ std::string Statistics::GetCsvHeaderString()
 std::string Statistics::GetCsvStyleString()
 {
   std::ostringstream res;
+
+  CalculateDelayTimes();
 
   res << m_nodeId << ",";
   res << m_numSentPackets << ",";
@@ -453,6 +486,13 @@ std::string Statistics::GetCsvStyleString()
   res << m_doubleRecDataBytes << ",";
   res << m_doubleRecControlPackets << ",";
   res << m_doubleRecControlBytes << ",";
+
+  res << m_newCompletedDataPackets << ",";
+
+  res << m_minTransmissionDelay << ",";
+  res << m_maxTransmissionDelay << ",";
+  res << m_medianTransmissionDelay << ",";
+  res << m_varianceTransmissionDelay << ",";
 
   res << m_TxOff.GetMilliSeconds() << ",";
   res << m_TxOn.GetMilliSeconds() << ",";

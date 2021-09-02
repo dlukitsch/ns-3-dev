@@ -1,7 +1,15 @@
-simFile,Protocol,simName,nodeCfg,packetSize [Bytes],numPackets,SendIntervall [ms],simEndTime [s],Transmit Power [dBm],channel Nr,interferencePacketSize [Bytes],interferenceSendIntervall [ms],Interference Transmit Power [dBm],Interfence Channel,MPL Proactive,MPL Reactive,MPL Seed-Lifetime [Min],MPL Data Imin [ms],MPL Data Imax,MPL Data K,MPL Data Expirations,MPL Control Imin [ms],MPL Control Imax,MPL Control K,MPL Control Expirations,Flooding Hops
-ConstantPosition_Model,Mpl,ConstantPosition_Model_Std_Mpl,./examples/multicast/stdModel.csv,50,10,1000,500,0,11,50,100,0,11,,,,,,,,,,,,
-ConstantPosition_Model,Flooding,ConstantPosition_Model_Std_Flooding,./examples/multicast/stdModel.csv,50,10,1000,500,0,11,50,100,0,11,,,,,,,,,,,,
-ConstantPosition_Model,Mpl,Line_4_Nodes_Interference_Mpl,./examples/multicast/Line_4_Nodes_Interference.csv,50,10,1000,500,0,11,50,100,0,11,,,,,,,,,,,,
-ConstantPosition_Model,Flooding,Line_4_Nodes_Interference_Flooding,./examples/multicast/Line_4_Nodes_Interference.csv,50,10,1000,500,0,11,50,100,0,11,,,,,,,,,,,,
-ConstantPosition_Model,Flooding,Line_4_Nodes_Flooding,./examples/multicast/Line_4_Nodes.csv,50,10,1000,500,0,11,50,100,0,11,,,,,,,,,,,,
-ConstantPosition_Model,Mpl,Line_4_Nodes_Mpl,./examples/multicast/Line_4_Nodes.csv,50,10,1000,500,0,11,50,100,0,11,TRUE,FALSE,3,4,5,6,7,8,9,10,11,12
+simFile,SimRuns,Protocol,simName,nodeCfg,Mobility-Model,Seed-Value,packetSize [Bytes],numPackets,SendIntervall [ms],simEndTime [s],Transmit Power [dBm],channel Nr,interferencePacketSize [Bytes],interferenceSendIntervall [ms],Interference Transmit Power [dBm],Interfence Channel,MPL Proactive,MPL Reactive,MPL Seed-Lifetime [Min],MPL Data Imin [ms],MPL Data Imax,MPL Data K,MPL Data Expirations,MPL Control Imin [ms],MPL Control Imax,MPL Control K,MPL Control Expirations,Flooding Hops
+Generic_Model,5,Mpl,Fixed_StdModel_Mpl,./examples/multicast/stdModel.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_StdModel_Flooding,./examples/multicast/stdModel.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Mpl,Fixed_Line_4_Nodes_Interference_Mpl,./examples/multicast/Line_4_Nodes_Interference.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_Line_4_Nodes_Interference_Flooding,./examples/multicast/Line_4_Nodes_Interference.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Random_Line_4_Nodes_Flooding,./examples/multicast/Line_4_Nodes.csv,random,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Mpl,Random_Line_4_Nodes_Mpl,./examples/multicast/Line_4_Nodes.csv,random,0,50,100,500,180,0,11,50,100,0,11,TRUE,FALSE,3,4,5,6,7,8,9,10,11,12
+Generic_Model,5,Mpl,Fixed_10x10_Square_Mpl,./examples/multicast/10x10_NodesSquare.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_10x10_Square_Flooding,./examples/multicast/10x10_NodesSquare.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Mpl,Fixed_100x100_Square_Mpl,./examples/multicast/100x100_NodesSquare.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_100x100_Square_Flooding,./examples/multicast/100x100_NodesSquare.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Mpl,Fixed_100_Nodes_Line_Mpl,./examples/multicast/100_NodesLine.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_100_Nodes_Line_Flooding,./examples/multicast/100_NodesLine.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Mpl,Fixed_100_Nodes_Random_Rectangle_Mpl,./examples/multicast/100_NodesRandomRectangle.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,
+Generic_Model,5,Flooding,Fixed_100_Nodes_Random_Rectangle_Flooding,./examples/multicast/100_NodesRandomRectangle.csv,fixed,0,50,100,500,180,0,11,50,100,0,11,,,,,,,,,,,,

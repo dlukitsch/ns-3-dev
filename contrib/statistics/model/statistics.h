@@ -5,15 +5,9 @@
 #include <ns3/object.h>
 #include "ns3/packet.h"
 #include "ns3/lr-wpan-net-device.h"
+#include "ns3/lr-wpan-mac-header.h"
 
 namespace ns3 {
-
-
-typedef enum
-{
-  ReceivedAccepted,
-  SentAccepted,
-} InsertToMap;
 
 class Statistics :  public Object
 {
@@ -78,6 +72,14 @@ private:
   uint m_doubleRecControlPackets;
   uint m_doubleRecControlBytes;
 
+  uint m_newCompletedDataPackets;
+
+  uint m_minTransmissionDelay;
+  uint m_maxTransmissionDelay;
+  uint m_medianTransmissionDelay;
+  double m_varianceTransmissionDelay;
+
+
   Time m_lastCall;
 
   Time m_RxOn;
@@ -96,27 +98,17 @@ private:
   struct cmpPacket {
       bool operator()(const Ptr<Packet>& a, const Ptr<Packet>& b) const
       {
-        if(a->GetSize() != b->GetSize())
-          return false;
-
-        std::vector<uint8_t> vA, vB;
-        vA.resize(a->GetSize());
-        vB.resize(b->GetSize());
-        a->CopyData(&vA[0], a->GetSize());
-        b->CopyData(&vB[0], b->GetSize());
-
-        if(memcmp(&vA[0], &vB[0], vA.size()))
-          return false;
-
-        return true;
+        return a->GetUid() < b->GetUid();
       }
   };
 
   // store all the messages with their data content once, so that we have an history of previously handled messages
-  std::set<Ptr<Packet>, cmpPacket> m_sentAcceptedMessages;
-  std::set<Ptr<Packet>, cmpPacket> m_recAcceptedMessages;
+  std::set<Ptr<Packet>, cmpPacket> m_messages;
+  std::vector<uint64_t> m_delayTimes; // store the delays of every successfull transmitted packet in ms
 
-  bool TryToInsertPacket(Ptr<Packet> packet, InsertToMap insertToMap);
+
+  void CalculateDelayTimes();
+  bool TryToInsertPacket(Ptr<Packet> packet);
   bool IsDataMessage(Ptr<Packet> packet);
   bool CheckIfInterferenceMessage(Ptr<Packet> packet);
 

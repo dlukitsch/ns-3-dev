@@ -54,6 +54,12 @@ def main(argv):
     ts_doubleSentControlPackets = []
     ts_doubleSentControlBytes = []
 
+    ts_recNewPackets = []
+    ts_minDelay = []
+    ts_maxDelay = []
+    ts_medianDelay = []
+    ts_varianceDelay = []
+
     ts_doubleRecPackets = []
     ts_doubleRecBytes = []
     ts_doubleRecDataPackets = []
@@ -83,29 +89,11 @@ def main(argv):
             diagtype = arg
         elif opt == "-v":
             diagvalue = arg
-        elif opt == "-a":
-            fileList.append(arg)
-        elif opt == "-b":
-            fileList.append(arg)
-        elif opt == "-c":
-            fileList.append(arg)
-        elif opt == "-d":
-            fileList.append(arg)
-        elif opt == "-e":
-            fileList.append(arg)
-        elif opt == "-f":
-            fileList.append(arg)
-        elif opt == "-g":
-            legendList.append(arg)
-        elif opt == "-h":
-            legendList.append(arg)
-        elif opt == "-i":
-            legendList.append(arg)
-        elif opt == "-j":
-            legendList.append(arg)
-        elif opt == "-k":
-            legendList.append(arg)
-        elif opt == "-l":
+        elif opt == "-a" or opt == "-b" or opt == "-c" or opt == "-d" or opt == "-e" or opt == "-f":
+            fileList.append(arg+"_mean.csv")
+            fileList.append(arg+"_median.csv")
+            fileList.append(arg+"_variance.csv")
+        elif opt == "-g" or opt == "-h" or opt == "-i" or opt == "-j" or opt == "-k" or opt == "-l":
             legendList.append(arg)
         elif opt == "-o":
             title = arg
@@ -165,30 +153,37 @@ def main(argv):
         ts_doubleRecControlPackets.append(dataset.iloc[:,35].tolist())
         ts_doubleRecControlBytes.append(dataset.iloc[:,36].tolist())
 
-        ts_txOff.append(dataset.iloc[:,37].tolist())
-        ts_txOn.append(dataset.iloc[:,38].tolist())
-        ts_txBusy.append(dataset.iloc[:,39].tolist())
-        ts_rxOff.append(dataset.iloc[:,40].tolist())
-        ts_rxOn.append(dataset.iloc[:,41].tolist())
-        ts_rxBusy.append(dataset.iloc[:,42].tolist())
-        ts_idle.append(dataset.iloc[:,43].tolist())
-        ts_txRxOff.append(dataset.iloc[:,44].tolist())
-        ts_busy.append(dataset.iloc[:,45].tolist())
+        ts_recNewPackets.append(dataset.iloc[:,37].tolist())
+        ts_minDelay.append(dataset.iloc[:,38].tolist())
+        ts_maxDelay.append(dataset.iloc[:,39].tolist())
+        ts_medianDelay.append(dataset.iloc[:,40].tolist())
+        ts_varianceDelay.append(dataset.iloc[:,41].tolist())
+
+        ts_txOff.append(dataset.iloc[:,42].tolist())
+        ts_txOn.append(dataset.iloc[:,43].tolist())
+        ts_txBusy.append(dataset.iloc[:,44].tolist())
+        ts_rxOff.append(dataset.iloc[:,45].tolist())
+        ts_rxOn.append(dataset.iloc[:,46].tolist())
+        ts_rxBusy.append(dataset.iloc[:,47].tolist())
+        ts_idle.append(dataset.iloc[:,48].tolist())
+        ts_txRxOff.append(dataset.iloc[:,49].tolist())
+        ts_busy.append(dataset.iloc[:,50].tolist())
 
     ts_nodeIds = ["Node " + str(int) for int in ts_nodeIdsInt[0]]
     X = np.arange(len(ts_nodeIdsInt[0]))
+    rects = []    
 #////////////////////////////////////////////////////////////////////////////////////////////
     #parsing done now we can create the diagram
     fig, axs = plt.subplots()
 
-    width = 1.0/(len(fileList)+1)
+    width = 1.0/(len(fileList)/3+1)
 
     axs.set_xlabel(xdes)
     axs.set_ylabel(ydes)
     axs.set_title(title)
 
     #cases to set the x-ticks in the middle of the according data
-    if len(fileList) == 2:
+    if len(fileList)//3 == 2:
         axs.set_xticks(X+width/2)
     else:
         axs.set_xticks(X+width)
@@ -196,8 +191,11 @@ def main(argv):
     axs.set_xticklabels(ts_nodeIds)
 
     if diagtype == "Bar":
-        for i in range(0,len(fileList)):
-            axs.bar(X+i*width, (locals()[diagvalue])[i], width)
+        for i in range(0,len(fileList)//3):
+            rects.append(axs.bar(X+i*width, (locals()[diagvalue])[i*3+1], width))
+
+        for i in rects:
+            axs.bar_label(i)
     else:
         print("Error: Unsupported Diagram Type selected!")
         sys.exit(1)

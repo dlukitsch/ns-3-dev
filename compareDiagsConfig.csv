@@ -1,2 +1,2 @@
-Output Filename,Diagram Type,Diagram Value,Diagram Title,X Description,Y Description,ResultFile1,Legend1,ResultFile2,Legend2,ResultFile3,Legend3,ResultFile4,Legend4,ResultFile5,Legend5,ResultFile6,Legend6
-Compare,Bar,ts_succSentPackets,Successfully Sent Packets,Network Node IDs,# of Packets,ConstantPosition_Model_Std_Flooding,Flooding,ConstantPosition_Model_Std_Mpl,MPL,ConstantPosition_Model_Std_Flooding,Flooding,,,,,,
+Output Filename,Diagram Type,Diagram Value,Diagram Title,X Description,Y Description,SimName1,ResultFile1,Legend1,SimName2,ResultFile2,Legend2,SimName3,ResultFile3,Legend3,SimName4,ResultFile4,Legend4,SimName5,ResultFile5,Legend5,SimName6,ResultFile6,Legend6
+Compare,Bar,ts_succSentPackets,Successfully Sent Packets,Network Node IDs,# of Packets,Fixed_StdModel_Flooding,results,Flooding,Fixed_StdModel_Mpl,results,MPL,,,,,,,,,,,,
