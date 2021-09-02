@@ -1,24 +1,5 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
-/*
- * Copyright (c) 2011 The Boeing Company
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author:
- *  Gary Pei <guangyu.pei@boeing.com>
- *  Sascha Alexander Jopen <jopen@cs.uni-bonn.de>
- */
+
 #include "lr-wpan-phy.h"
 #include "lr-wpan-lqi-tag.h"
 #include "lr-wpan-spectrum-signal-parameters.h"
@@ -305,6 +286,8 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
         }
 
       Simulator::Schedule (spectrumRxParams->duration, &LrWpanPhy::EndRx, this, spectrumRxParams);
+      for(auto i : m_listeners)
+        i->NotifyRxStart(spectrumRxParams->duration);
       return;
     }
 
@@ -351,6 +334,9 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
       else
         {
           m_phyRxDropTrace (p);
+          for(auto i : m_listeners)
+            i->NotifyRxEndError();
+
         }
     }
   else if (m_trxState == IEEE_802_15_4_PHY_BUSY_RX)
@@ -358,6 +344,8 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
       // Drop the new packet.
       NS_LOG_DEBUG (this << " packet collision");
       m_phyRxDropTrace (p);
+      for(auto i : m_listeners)
+        i->NotifyRxEndError();
 
       // Check if we correctly received the old packet up to now.
       CheckInterference ();
@@ -372,6 +360,8 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
       // Simply drop the packet.
       NS_LOG_DEBUG (this << " transceiver not in RX state");
       m_phyRxDropTrace (p);
+      for(auto i : m_listeners)
+        i->NotifyRxEndError();
 
       // Add the signal power to the interference, anyway.
       m_signal->AddSignal (lrWpanRxParams->psd);
@@ -391,6 +381,8 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
   // \todo: Do we need to keep track of these events to unschedule them when disposing off the PHY?
 
   Simulator::Schedule (spectrumRxParams->duration, &LrWpanPhy::EndRx, this, spectrumRxParams);
+  for(auto i : m_listeners)
+    i->NotifyRxStart(spectrumRxParams->duration);
 }
 
 void
@@ -479,6 +471,8 @@ LrWpanPhy::EndRx (Ptr<SpectrumSignalParameters> par)
       LrWpanLqiTag tag (std::numeric_limits<uint8_t>::max ());
       currentPacket->PeekPacketTag (tag);
       m_phyRxEndTrace (currentPacket, tag.Get ());
+      for(auto i : m_listeners)
+        i->NotifyRxEndOk();
 
       if (!m_currentRxPacket.second)
         {
@@ -492,6 +486,8 @@ LrWpanPhy::EndRx (Ptr<SpectrumSignalParameters> par)
         {
           // The packet was destroyed, drop it.
           m_phyRxDropTrace (currentPacket);
+          for(auto i : m_listeners)
+            i->NotifyRxEndError();
         }
       Ptr<LrWpanSpectrumSignalParameters> none = 0;
       m_currentRxPacket = std::make_pair (none, true);
@@ -560,6 +556,8 @@ LrWpanPhy::PdDataRequest (const uint32_t psduLength, Ptr<Packet> p)
           txParams->packetBurst = pb;
           m_channel->StartTx (txParams);
           m_pdDataRequest = Simulator::Schedule (txParams->duration, &LrWpanPhy::EndTx, this);
+          for(auto i : m_listeners)
+            i->NotifyTxStart(txParams->duration, 0); // TODO: the TX-Power is hardcoded to 0dBm
           ChangeTrxState (IEEE_802_15_4_PHY_BUSY_TX);
           return;
         }
@@ -867,7 +865,11 @@ LrWpanPhy::PlmeSetTRXStateRequest (LrWpanPhyEnumeration state)
           return;
         }
     }
-
+  if(m_trxState == IEEE_802_15_4_PHY_FORCE_TRX_OFF)
+  {
+    NS_LOG_INFO("Battery depleted, cannot do anything anymore!");
+    return;
+  }
   NS_FATAL_ERROR ("Unexpected transition from state " << m_trxState << " to state " << state);
 }
 
@@ -1046,11 +1048,43 @@ LrWpanPhy::SetPlmeSetAttributeConfirmCallback (PlmeSetAttributeConfirmCallback c
 }
 
 void
-LrWpanPhy::ChangeTrxState (LrWpanPhyEnumeration newState)
+LrWpanPhy::ChangeTrxState (LrWpanPhyEnumeration newState, bool resetBattery)
 {
   NS_LOG_LOGIC (this << " state: " << m_trxState << " -> " << newState);
   m_trxStateLogger (Simulator::Now (), m_trxState, newState);
-  m_trxState = newState;
+  for(auto i : m_listeners)
+  {
+    switch(newState)
+    {
+      case IEEE_802_15_4_PHY_BUSY:
+      case IEEE_802_15_4_PHY_IDLE:
+      case IEEE_802_15_4_PHY_INVALID_PARAMETER:
+      case IEEE_802_15_4_PHY_SUCCESS:
+      case IEEE_802_15_4_PHY_UNSUPPORTED_ATTRIBUTE:
+      case IEEE_802_15_4_PHY_READ_ONLY:
+      case IEEE_802_15_4_PHY_UNSPECIFIED:
+        i->NotifyTxOffRxOff();
+        break;
+      case IEEE_802_15_4_PHY_BUSY_RX:
+      case IEEE_802_15_4_PHY_BUSY_TX:  // do nothing as we already notified for these states
+        break;
+      case IEEE_802_15_4_PHY_FORCE_TRX_OFF:
+      case IEEE_802_15_4_PHY_TRX_OFF:
+        i->NotifyTxOffRxOff();
+        break;
+      case IEEE_802_15_4_PHY_RX_ON:
+        i->NotifyRxOn();
+        break;
+      case IEEE_802_15_4_PHY_TX_ON:
+        i->NotifyTxOn();
+        break;
+
+    }
+  }
+  if(m_trxState != IEEE_802_15_4_PHY_FORCE_TRX_OFF)
+    m_trxState = newState;
+  else if(resetBattery)
+    m_trxState = newState;
 }
 
 bool
@@ -1448,6 +1482,37 @@ LrWpanPhy::AssignStreams (int64_t stream)
   NS_LOG_FUNCTION (this);
   m_random->SetStream (stream);
   return 1;
+}
+
+void
+LrWpanPhy::RegisterListener (LrWpanPhyListener *listener)
+{
+  m_listeners.push_back(listener);
+}
+
+void
+LrWpanPhy::UnregisterListener (LrWpanPhyListener *listener)
+{
+  for(auto it = m_listeners.begin(); it != m_listeners.end(); it++)
+  {
+    if(*it == listener)
+      m_listeners.erase(it);
+  }
+}
+
+void LrWpanPhy::SetLrWpanRadioEnergyModel (const Ptr<LrWpanRadioEnergyModel> lrWpanRadioEnergyModel)
+{
+  m_lrWpanRadioEnergyModel = lrWpanRadioEnergyModel;
+}
+
+void LrWpanPhy::ChangeToOffState()
+{
+  ChangeTrxState(IEEE_802_15_4_PHY_FORCE_TRX_OFF);
+}
+
+void LrWpanPhy::ResumeFromOff()
+{
+  ChangeTrxState(IEEE_802_15_4_PHY_RX_ON, true);
 }
 
 } // namespace ns3

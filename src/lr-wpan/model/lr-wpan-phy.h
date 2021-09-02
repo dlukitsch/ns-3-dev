@@ -1,28 +1,12 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
-/*
- * Copyright (c) 2011 The Boeing Company
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author:
- *  Gary Pei <guangyu.pei@boeing.com>
- *  Sascha Alexander Jopen <jopen@cs.uni-bonn.de>
- */
+
 #ifndef LR_WPAN_PHY_H
 #define LR_WPAN_PHY_H
 
 #include "lr-wpan-interference-helper.h"
+
+#include "lr-wpan-radio-energy-model.h"
+#include "lr-wpan-phy-listener.h"
 
 #include <ns3/spectrum-phy.h>
 #include <ns3/traced-callback.h>
@@ -41,6 +25,7 @@ class SpectrumModel;
 class AntennaModel;
 class NetDevice;
 class UniformRandomVariable;
+class LrWpanRadioEnergyModel;
 
 /**
  * \ingroup lr-wpan
@@ -116,7 +101,7 @@ typedef enum
   IEEE_802_15_4_PHY_TX_ON = 0x09,
   IEEE_802_15_4_PHY_UNSUPPORTED_ATTRIBUTE = 0xa,
   IEEE_802_15_4_PHY_READ_ONLY = 0xb,
-  IEEE_802_15_4_PHY_UNSPECIFIED = 0xc // all cases not covered by ieee802.15.4
+  IEEE_802_15_4_PHY_UNSPECIFIED = 0xc, // all cases not covered by ieee802.15.4
 } LrWpanPhyEnumeration;
 
 namespace TracedValueCallback
@@ -477,6 +462,16 @@ public:
    */
   int64_t AssignStreams (int64_t stream);
 
+  void SetLrWpanRadioEnergyModel (const Ptr<LrWpanRadioEnergyModel> lrWpanRadioEnergyModel);
+
+  void RegisterListener (LrWpanPhyListener *listener);
+
+  void UnregisterListener (LrWpanPhyListener *listener);
+
+  void ChangeToOffState();
+
+  void ResumeFromOff();
+
   /**
    * TracedCallback signature for Trx state change events.
    *
@@ -517,7 +512,7 @@ private:
    *
    * \param newState the new state
    */
-  void ChangeTrxState (LrWpanPhyEnumeration newState);
+  void ChangeTrxState (LrWpanPhyEnumeration newState, bool resetBattery = false);
 
   /**
    * Configure the PHY option according to the current channel and channel page.
@@ -856,10 +851,14 @@ private:
    */
   EventId m_pdDataRequest;
 
+
+  std::vector<LrWpanPhyListener*> m_listeners;
   /**
    * Uniform random variable stream.
    */
   Ptr<UniformRandomVariable> m_random;
+
+  Ptr<LrWpanRadioEnergyModel> m_lrWpanRadioEnergyModel;
 };
 
 
