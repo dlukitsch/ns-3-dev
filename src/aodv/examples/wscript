@@ -4,3 +4,7 @@ def build(bld):
     obj = bld.create_ns3_program('aodv',
                                  ['wifi', 'internet', 'aodv', 'internet-apps'])
     obj.source = 'aodv.cc'
+    
+    obj = bld.create_ns3_program('aodv-lrpwan',
+                                 ['wifi', 'internet', 'aodv', 'internet-apps', 'lr-wpan', 'sixlowpan', 'netanim'])
+    obj.source = 'aodv-lrwpan.cc'

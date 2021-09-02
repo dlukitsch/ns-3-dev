@@ -11,7 +11,15 @@ def build(bld):
         'model/aodv-packet.cc',
         'model/aodv-neighbor.cc',
         'model/aodv-routing-protocol.cc',
+        'model/aodv-ipv6-id-cache.cc',
+        'model/aodv-ipv6-dpd.cc',
+        'model/aodv-ipv6-rtable.cc',
+        'model/aodv-ipv6-rqueue.cc',
+        'model/aodv-ipv6-packet.cc',
+        'model/aodv-ipv6-neighbor.cc',
+        'model/aodv-ipv6-routing-protocol.cc',
         'helper/aodv-helper.cc',
+        'helper/aodv-ipv6-helper.cc',
         ]
 
     aodv_test = bld.create_ns3_module_test_library('aodv')
@@ -39,7 +47,15 @@ def build(bld):
         'model/aodv-packet.h',
         'model/aodv-neighbor.h',
         'model/aodv-routing-protocol.h',
+        'model/aodv-ipv6-id-cache.h',
+        'model/aodv-ipv6-dpd.h',
+        'model/aodv-ipv6-rtable.h',
+        'model/aodv-ipv6-rqueue.h',
+        'model/aodv-ipv6-packet.h',
+        'model/aodv-ipv6-neighbor.h',
+        'model/aodv-ipv6-routing-protocol.h',
         'helper/aodv-helper.h',
+        'helper/aodv-ipv6-helper.h',
         ]
 
     if bld.env['ENABLE_EXAMPLES']:
