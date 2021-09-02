@@ -612,6 +612,7 @@ void RoutingProtocol::RetransmitMessage(Ipv6Address mplDomain, uint64_t seedId, 
           buffer[4] &= ~(1 << 5);
 
         Ptr<Packet> newPacket = Create<Packet> (&buffer[0], packet->GetSize());
+        newPacket->SetUid(packet->GetUid());
 
         l3Protocol->Send(newPacket, route->GetSource(), route->GetDestination(), Ipv6ExtensionHopByHop::EXT_NUMBER, route);
       }

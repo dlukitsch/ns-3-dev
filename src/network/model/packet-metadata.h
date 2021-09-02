@@ -26,6 +26,7 @@
 #include "ns3/callback.h"
 #include "ns3/assert.h"
 #include "ns3/type-id.h"
+#include "ns3/nstime.h"
 #include "buffer.h"
 
 namespace ns3 {
@@ -244,6 +245,12 @@ private:
    * \return the packet Uid
    */
   uint64_t GetUid (void) const;
+
+  void SetUid (const uint64_t uid);
+
+  void SetSendTimeStamp (const Time time);
+
+  Time GetSendTimeStamp (void) const;
 
   /**
    * \brief Get the metadata serialized size
@@ -685,6 +692,7 @@ public:
   uint16_t m_tail; //!< list tail
   uint16_t m_used; //!< used portion
   uint64_t m_packetUid; //!< packet Uid
+  Time m_sendTimestamp;
 };
 
 } // namespace ns3

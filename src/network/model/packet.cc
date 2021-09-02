@@ -393,6 +393,22 @@ Packet::GetUid (void) const
 }
 
 void 
+Packet::SetUid (const uint64_t uid)
+{
+  m_metadata.SetUid(uid);
+}
+
+void Packet::SetSendTimeStamp (const Time time)
+{
+  m_metadata.SetSendTimeStamp(time);
+}
+
+Time Packet::GetSendTimeStamp (void) const
+{
+  return m_metadata.GetSendTimeStamp();
+}
+
+void
 Packet::PrintByteTags (std::ostream &os) const
 {
   ByteTagIterator i = GetByteTagIterator ();

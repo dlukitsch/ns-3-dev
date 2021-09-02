@@ -188,6 +188,8 @@ UdpClient::Send (void)
       peerAddressStringStream << Ipv6Address::ConvertFrom (m_peerAddress);
     }
 
+  p->SetSendTimeStamp(Simulator::Now ());
+
   if ((m_socket->Send (p)) >= 0)
     {
       ++m_sent;

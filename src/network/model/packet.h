@@ -474,6 +474,12 @@ public:
    */
   uint64_t GetUid (void) const;
 
+  void SetUid (const uint64_t uid);
+
+  void SetSendTimeStamp (const Time time);
+
+  Time GetSendTimeStamp (void) const;
+
   /**
    * \brief Print the packet contents.
    *

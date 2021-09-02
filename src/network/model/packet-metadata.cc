@@ -1042,6 +1042,23 @@ PacketMetadata::GetUid (void) const
   NS_LOG_FUNCTION (this);
   return m_packetUid;
 }
+
+void
+PacketMetadata::SetUid (const uint64_t uid)
+{
+  m_packetUid = uid;
+}
+
+void PacketMetadata::SetSendTimeStamp (const Time time)
+{
+  m_sendTimestamp = time;
+}
+
+Time PacketMetadata::GetSendTimeStamp (void) const
+{
+  return m_sendTimestamp;
+}
+
 PacketMetadata::ItemIterator 
 PacketMetadata::BeginItem (Buffer buffer) const
 {
