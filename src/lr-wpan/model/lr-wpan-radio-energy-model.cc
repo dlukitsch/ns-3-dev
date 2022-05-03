@@ -35,13 +35,13 @@ LrWpanRadioEnergyModel::GetTypeId (void)
                    MakeDoubleChecker<double> ())
     .AddAttribute ("TxSendCurrentA",
                    "The radio TX current in Ampere.",
-                   DoubleValue (0.008),
+                   DoubleValue (0.08),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetTxCurrentA,
                                        &LrWpanRadioEnergyModel::GetTxCurrentA),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("RxReceiveCurrentA",
                    "The radio RX current in Ampere.",
-                   DoubleValue (0.008),
+                   DoubleValue (0.08),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetRxCurrentA,
                                        &LrWpanRadioEnergyModel::GetRxCurrentA),
                    MakeDoubleChecker<double> ())
@@ -53,6 +53,10 @@ LrWpanRadioEnergyModel::GetTypeId (void)
                      "Total energy consumption of the radio device.",
                      MakeTraceSourceAccessor (&LrWpanRadioEnergyModel::m_totalEnergyConsumption),
                      "ns3::TracedValueCallback::Double")
+    .AddTraceSource ("TotalEnergyDepleted",
+                     "Total energy consumption of the radio device.",
+                     MakeTraceSourceAccessor (&LrWpanRadioEnergyModel::m_totalEnergyDepleated),
+                     "ns3::TracedValueCallback::Bool")
   ;
   return tid;
 }
@@ -61,7 +65,9 @@ LrWpanRadioEnergyModel::LrWpanRadioEnergyModel ()
   : m_source (0),
     m_currentState (IEEE_802_15_4_PHY_RX_ON),
     m_lastUpdateTime (Seconds (0.0)),
-    m_nPendingChangeState (0)
+    m_nPendingChangeState (0),
+    m_totalEnergyConsumption (0),
+    m_totalEnergyDepleated (false)
 {
   NS_LOG_FUNCTION (this);
   m_energyDepletionCallback.Nullify ();
@@ -206,9 +212,9 @@ void
 LrWpanRadioEnergyModel::SetTxCurrentFromModel (double txPowerDbm)
 {
   if (m_txCurrentModel)
-    {
-      m_txCurrentA = m_txCurrentModel->CalcTxCurrent (txPowerDbm);
-    }
+  {
+    m_txCurrentA = m_txCurrentModel->CalcTxCurrent (txPowerDbm);
+  }
 }
 
 Time
@@ -221,7 +227,10 @@ LrWpanRadioEnergyModel::GetMaximumTimeInState (int state) const
   double remainingEnergy = m_source->GetRemainingEnergy ();
   double supplyVoltage = m_source->GetSupplyVoltage ();
   double current = GetStateA (state);
-  return Seconds (remainingEnergy / (current * supplyVoltage));
+
+  double time = remainingEnergy / (current * supplyVoltage);
+
+  return Seconds(time);
 }
 
 void
@@ -235,6 +244,7 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
     {
       SetLrWpanRadioState (newState);
       m_nPendingChangeState--;
+      m_totalEnergyDepleated = true;
       return;
     }
 
@@ -251,9 +261,10 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
   // energy to decrease = current * voltage * time
   double supplyVoltage = m_source->GetSupplyVoltage ();
   double energyToDecrease = duration.GetSeconds () * GetStateA (m_currentState) * supplyVoltage;
+
   // update total energy consumption
   m_totalEnergyConsumption += energyToDecrease;
-  if(m_totalEnergyConsumption > m_source->GetInitialEnergy())
+  if(m_totalEnergyConsumption >= m_source->GetInitialEnergy())
   {
     NS_LOG_INFO("Energy usage generally too high for Energy-Source! Reset last used energy-amount to fully drain the battery!");
     m_totalEnergyConsumption = m_source->GetInitialEnergy();
@@ -274,8 +285,11 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
   // by the previous instance is erroneously the final state stored in m_currentState. The check below
   // ensures that previous instances do not change m_currentState.
 
-  if (m_nPendingChangeState <= 1 && m_currentState != IEEE_802_15_4_PHY_FORCE_TRX_OFF)
+  if (m_nPendingChangeState <= 1)
     {
+    if(newState == IEEE_802_15_4_PHY_FORCE_TRX_OFF)
+      m_totalEnergyDepleated = true;
+
       // update current state & last update time stamp
       SetLrWpanRadioState (newState);
 
@@ -293,6 +307,8 @@ LrWpanRadioEnergyModel::HandleEnergyDepletion (void)
   NS_LOG_FUNCTION (this);
   NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Energy is depleted!");
   // invoke energy depletion callback, if set.
+  m_totalEnergyDepleated = true;
+
   if (!m_energyDepletionCallback.IsNull ())
     {
       m_energyDepletionCallback ();

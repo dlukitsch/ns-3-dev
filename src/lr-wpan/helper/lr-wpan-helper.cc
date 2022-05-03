@@ -67,7 +67,10 @@ LrWpanHelper::LrWpanHelper (void)
 {
   m_channel = CreateObject<SingleModelSpectrumChannel> ();
 
-  Ptr<LogDistancePropagationLossModel> lossModel = CreateObject<LogDistancePropagationLossModel> ();
+    Ptr<LogDistancePropagationLossModel> lossModel = CreateObject<LogDistancePropagationLossModel> ();
+//  Ptr<RangePropagationLossModel> lossModel = CreateObject<RangePropagationLossModel>();
+//  lossModel->SetAttribute("MaxRange", DoubleValue(111));
+
   m_channel->AddPropagationLossModel (lossModel);
 
   Ptr<ConstantSpeedPropagationDelayModel> delayModel = CreateObject<ConstantSpeedPropagationDelayModel> ();

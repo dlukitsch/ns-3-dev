@@ -17,7 +17,7 @@ public:
   Statistics();
   virtual ~Statistics();
 
-  void InstallTraces(Ptr<LrWpanPhy> phy);
+  void InstallTraces(Ptr<LrWpanPhy> phy, bool withEnergyModel);
 
   std::string GetResultString();
   std::string GetCsvStyleString();
@@ -79,6 +79,9 @@ private:
   uint m_medianTransmissionDelay;
   double m_varianceTransmissionDelay;
 
+  Time m_nodeLifeTime;
+  double m_energyUsage;
+  double m_simEndTime;
 
   Time m_lastCall;
 
@@ -113,6 +116,9 @@ private:
   bool CheckIfInterferenceMessage(Ptr<Packet> packet);
 
   void TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpanPhyEnumeration newState);
+
+  void NodeEnergyDepleted(bool oldState, bool newState);
+  void EnergyUsage(double oldEnergy, double newEnergy);
 
   void TxEndTraceSink (Ptr<const Packet> packet);
   void TxEndDropTraceSink (Ptr<const Packet> packet);

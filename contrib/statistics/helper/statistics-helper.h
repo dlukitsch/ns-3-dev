@@ -18,7 +18,7 @@ class StatisticsHelper
     StatisticsHelper();
     ~StatisticsHelper();
 
-    void Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev);
+    void Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev, bool withEnergyModel, uint32_t simEndTime);
 
     std::string PrintResults(Ptr<Node> node);
     std::string PrintResults(NodeContainer nodes);

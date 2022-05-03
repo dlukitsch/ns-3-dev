@@ -287,7 +287,7 @@ RoutingProtocol::GetTypeId (void)
                                         &RoutingProtocol::GetHelloEnable),
                    MakeBooleanChecker ())
     .AddAttribute ("EnableBroadcast", "Indicates whether a broadcast data packets forwarding enable.",
-                   BooleanValue (true),
+                   BooleanValue (false),
                    MakeBooleanAccessor (&RoutingProtocol::SetBroadcastEnable,
                                         &RoutingProtocol::GetBroadcastEnable),
                    MakeBooleanChecker ())
@@ -456,6 +456,8 @@ RoutingProtocol::RouteInput  (Ptr<const Packet> p, const Ipv6Header &header, Ptr
   header.GetDestinationAddress().GetBytes(destBytes);
   header.GetSourceAddress().GetBytes(srcBytes);
   //Correct the bug with the wrong received IPv6-Address, where bytes[2]-[5] are set completely randomly to any value without any reason
+
+
   memset(&srcBytes[2], 0, 4); // reset them back to zero as they should be
   memset(&destBytes[2], 0, 4);
   const_cast<Ipv6Header&>(header).SetSourceAddress(Ipv6Address(srcBytes));

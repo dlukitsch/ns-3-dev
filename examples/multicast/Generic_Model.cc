@@ -34,7 +34,7 @@ int main (int argc, char *argv[])
 {
   std::string simName = filename;
   std::string protocol = "Flooding";
-  std::string input = "./examples/multicast/100_NodesRandomRectangle.csv";
+  std::string input = "./examples/multicast/stdModel.csv";
 
   uint32_t packetSize = 50;
   uint32_t numPackets = 100;
@@ -67,6 +67,9 @@ int main (int argc, char *argv[])
   uint32_t numRuns = 5;
   uint32_t seed = 0;
   std::string mobilityMode = "fixed";
+
+  bool energyModelEnabled = false;
+  double initialNodeEnergy = 10;
 
   Config::SetGlobal("ChecksumEnabled", BooleanValue(true));
 
@@ -102,10 +105,14 @@ int main (int argc, char *argv[])
   cmd.AddValue ("rngInit","Seed-Value to initialize the RNG-Generator.", seed);
   cmd.AddValue ("mobilityMode","The mobility-model to use for the simulation.", mobilityMode);
 
+  cmd.AddValue ("energyModelEnabled","Enables or disables the assignment of an energy model to the nodes", energyModelEnabled);
+  cmd.AddValue ("initialNodeEnergy","The available energy contained in the nodes battery", initialNodeEnergy);
+
   cmd.Parse (argc, argv);
 
   LogComponentEnable (filename.c_str(), LOG_LEVEL_ALL);
   LogComponentEnable ("CustomTopologyReader", LOG_LEVEL_ALL);
+  //LogComponentEnable ("LrWpanRadioEnergyModel", LOG_LEVEL_ALL);
 
   TopologyReaderHelper topologyHelper;
   std::map<uint , std::tuple<Vector, int, int, int, int > > topology;
@@ -154,17 +161,17 @@ int main (int argc, char *argv[])
     {
       mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
                                "Mode", StringValue ("Time"),
-                               "Distance", DoubleValue (20.0),
-                               "Time", StringValue ("2s"),
-                               "Speed", StringValue ("ns3::UniformRandomVariable[Min=50.0|Max=50.0]"),
-                               "Bounds", RectangleValue (Rectangle (-1000.0, 1000.0, -1000.0, 1000.0)));
+                               "Time", TimeValue (Seconds (10)),  // time after which the speed and direction is changed
+                               "Bounds", RectangleValue (Rectangle (-1000.0, 1000.0, -1000.0, 1000.0)), // TODO set correct bounds for model
+                               "Speed", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=5.0]"),
+                               "Direction", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=6.283184]")
+      );
     }
     else
       NS_LOG_ERROR("Error: Wrong mobility-model specified!");
 
-
     mobility.Install(nodes);
-    //AsciiTraceHelper ascii;
+    AsciiTraceHelper ascii;
     //MobilityHelper::EnableAsciiAll (ascii.CreateFileStream (path + filename + ".mob"));
 
     LrWpanHelper lrWpanHelper;
@@ -184,13 +191,30 @@ int main (int argc, char *argv[])
     for(auto it = topology.begin(); it != topology.end(); it++)
     {
       Ptr<LrWpanPhy> phy = devContainer.Get(it->first)->GetObject<LrWpanNetDevice>()->GetPhy();
+      phy->SetAttribute("TxPower", DoubleValue(txPower));
+
 
       if(std::get<3>(it->second) == -1 && std::get<4>(it->second) == -1)
       {
         normalNodes.Add(nodes.Get(it->first));
         phy->SetTxPowerSpectralDensity(psd);
         panIDContainers[0].Add(devContainer.Get(it->first));
-        statHelper.Install(nodes.Get(it->first), DynamicCast<LrWpanNetDevice>(devContainer.Get(it->first)));
+
+        /** Energy Model **/
+        /***************************************************************************/
+        /* energy source */
+        if(energyModelEnabled)
+        {
+          BasicEnergySourceHelper basicSourceHelper;
+          basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (initialNodeEnergy));
+          basicSourceHelper.Set ("PeriodicEnergyUpdateInterval", TimeValue (Simulator::GetMaximumSimulationTime())); // do not reload the battery
+          EnergySourceContainer sources = basicSourceHelper.Install(normalNodes);
+          LrWpanRadioEnergyModelHelper radioEnergyHelper;
+          DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (panIDContainers[0], sources);
+        }
+        /***************************************************************************/
+
+        statHelper.Install(nodes.Get(it->first), DynamicCast<LrWpanNetDevice>(devContainer.Get(it->first)), energyModelEnabled, simEndTime);
         normalNodeIndex++;
       }
       else
@@ -201,19 +225,9 @@ int main (int argc, char *argv[])
       }
     }
 
-    /** Energy Model **/
-    /***************************************************************************/
-    /* energy source */
-    BasicEnergySourceHelper basicSourceHelper;
-    basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (0.01));
-    EnergySourceContainer sources = basicSourceHelper.Install(normalNodes);
-    LrWpanRadioEnergyModelHelper radioEnergyHelper;
-    DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (panIDContainers[0], sources);
-    /***************************************************************************/
-
     lrWpanHelper.AssociateToPan (devContainer, 10);
-//    lrWpanHelper.EnablePcap(path+filename , panIDContainers[0], true); // enable pcap generation only for normal nodes
-//    lrWpanHelper.EnableAsciiAll (ascii.CreateFileStream (path  + filename + ".tr"));
+    lrWpanHelper.EnablePcap(path+filename , panIDContainers[0], true); // enable pcap generation only for normal nodes
+    lrWpanHelper.EnableAsciiAll (ascii.CreateFileStream (path  + filename + ".tr"));
 
 
     /* Install IPv4/IPv6 stack */
@@ -383,25 +397,7 @@ int main (int argc, char *argv[])
 
     Simulator::Stop(Seconds(simEndTime));
     Simulator::Run ();
-
-    /*
-    for (DeviceEnergyModelContainer::Iterator iter = deviceModels.Begin (); iter != deviceModels.End (); iter ++)
-      {
-        double energyConsumed = (*iter)->GetTotalEnergyConsumption ();
-        NS_LOG_UNCOND ("End of simulation (" << Simulator::Now ().GetSeconds ()
-                       << "s) Total energy consumed by radio = " << energyConsumed << "J");
-      }
-*/
     Simulator::Destroy ();
-
-    // TODO:
-    // percentage of control data vs. use-data
-    // percentage of duplicated-use-data vs. new-use-data
-    // delay from sending to receiving (timestamp is inside of tseq-header)
-    // reception percentage
-    // num received/sent bytes/packets
-    // Time of enabled RX/TX component
-    // ...
 
     // store the results of the different runs in a common folder
     filename = "results";

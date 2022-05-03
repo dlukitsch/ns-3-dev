@@ -5,6 +5,7 @@
 #include "ns3/lr-wpan-net-device.h"
 #include "ns3/simulator.h"
 #include "ns3/lr-wpan-mac-header.h"
+#include "ns3/lr-wpan-radio-energy-model.h"
 #include <algorithm>
 
 NS_LOG_COMPONENT_DEFINE ("Statistics");
@@ -19,7 +20,12 @@ TypeId Statistics::GetTypeId (void)
   static TypeId tid = TypeId ("ns3::Statistics")
     .SetParent<Object> ()
     .SetGroupName ("Statistics")
-    .AddConstructor<Statistics> ();
+    .AddConstructor<Statistics> ()
+    .AddAttribute ("SimEndTime",
+                       "The end time of the simulation in seconds.",
+                       DoubleValue (3800),
+                       MakeDoubleAccessor (&Statistics::m_simEndTime),
+                       MakeDoubleChecker<double> ());
   return tid;
 }
 
@@ -78,6 +84,7 @@ Statistics::Statistics()
   m_medianTransmissionDelay = 0;
 
   m_lastCall = Seconds(0);
+  m_energyUsage = 0.0;
 
   m_RxOn = MicroSeconds(0);
   m_RxOff = MicroSeconds(0);
@@ -91,6 +98,9 @@ Statistics::Statistics()
 
   m_TxRxOff = MicroSeconds(0);
   m_Busy = MicroSeconds(0);
+
+  m_nodeLifeTime = Seconds(0);
+  m_simEndTime = 0.0;
 }
 
 Statistics::~Statistics()
@@ -103,13 +113,30 @@ void Statistics::SetNodeId(uint32_t nodeId)
   m_nodeId = nodeId;
 }
 
-void Statistics::InstallTraces(Ptr<LrWpanPhy> phy)
+void Statistics::InstallTraces(Ptr<LrWpanPhy> phy, bool withEnergyModel)
 {
   phy->TraceConnectWithoutContext("TrxStateValue", MakeCallback(&Statistics::TransceiverStateTraceSink , this));
   phy->TraceConnectWithoutContext("PhyTxDrop", MakeCallback(&Statistics::TxEndDropTraceSink, this));
   phy->TraceConnectWithoutContext("PhyTxEnd", MakeCallback(&Statistics::TxEndTraceSink, this));
   phy->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&Statistics::RxEndTraceSink, this));
   phy->TraceConnectWithoutContext("PhyRxDrop", MakeCallback(&Statistics::RxEndDropTraceSink, this));
+  if(withEnergyModel)
+  {
+    phy->GetLrWpanRadioEnergyModel()->TraceConnectWithoutContext("TotalEnergyDepleted", MakeCallback(&Statistics::NodeEnergyDepleted, this));
+    phy->GetLrWpanRadioEnergyModel()->TraceConnectWithoutContext("TotalEnergyConsumption", MakeCallback(&Statistics::EnergyUsage, this));
+  }
+}
+
+void Statistics::NodeEnergyDepleted(bool oldState, bool newState)
+{
+  if(newState)
+    m_nodeLifeTime = Now();
+}
+
+void Statistics::EnergyUsage(double oldEnergy, double newEnergy)
+{
+  m_energyUsage = newEnergy;
+  //std::cout << "energy first: " <<  oldEnergy  <<  " new energy: " << newEnergy << std::endl;
 }
 
 void Statistics::TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpanPhyEnumeration newState)
@@ -423,6 +450,9 @@ std::string Statistics::GetCsvHeaderString()
   res << "Median Transmission Delay [ms]" << ",";
   res << "Variance Transmission Delay [ms]" << ",";
 
+  res << "Node LifeTime [s]" << ",";
+  res << "Used Energy [J]" << ",";
+
   res << "Tx Off [ms]" << ",";
   res << "Tx On [ms]" << ",";
   res << "Tx Busy [ms]" << ",";
@@ -493,6 +523,13 @@ std::string Statistics::GetCsvStyleString()
   res << m_maxTransmissionDelay << ",";
   res << m_medianTransmissionDelay << ",";
   res << m_varianceTransmissionDelay << ",";
+
+  if(m_nodeLifeTime.GetSeconds() == 0.0)
+    res << m_simEndTime << ",";
+  else
+    res << m_nodeLifeTime.GetSeconds() << ",";
+
+  res << m_energyUsage << ",";
 
   res << m_TxOff.GetMilliSeconds() << ",";
   res << m_TxOn.GetMilliSeconds() << ",";

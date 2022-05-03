@@ -58,6 +58,11 @@ LrWpanPhy::GetTypeId (void)
     .SetParent<SpectrumPhy> ()
     .SetGroupName ("LrWpan")
     .AddConstructor<LrWpanPhy> ()
+    .AddAttribute ("TxPower",
+                       "The Power used to transmit messages, used for the energy model",
+                       DoubleValue (0),
+                       MakeDoubleAccessor (&LrWpanPhy::m_txPower),
+                       MakeDoubleChecker<double> ())
     .AddTraceSource ("TrxStateValue",
                      "The state of the transceiver",
                      MakeTraceSourceAccessor (&LrWpanPhy::m_trxState),
@@ -333,7 +338,7 @@ LrWpanPhy::StartRx (Ptr<SpectrumSignalParameters> spectrumRxParams)
         }
       else
         {
-          m_phyRxDropTrace (p);
+      //    m_phyRxDropTrace (p);
           for(auto i : m_listeners)
             i->NotifyRxEndError();
 
@@ -557,7 +562,7 @@ LrWpanPhy::PdDataRequest (const uint32_t psduLength, Ptr<Packet> p)
           m_channel->StartTx (txParams);
           m_pdDataRequest = Simulator::Schedule (txParams->duration, &LrWpanPhy::EndTx, this);
           for(auto i : m_listeners)
-            i->NotifyTxStart(txParams->duration, 0); // TODO: the TX-Power is hardcoded to 0dBm
+            i->NotifyTxStart(txParams->duration, m_txPower);
           ChangeTrxState (IEEE_802_15_4_PHY_BUSY_TX);
           return;
         }
@@ -1503,6 +1508,11 @@ LrWpanPhy::UnregisterListener (LrWpanPhyListener *listener)
 void LrWpanPhy::SetLrWpanRadioEnergyModel (const Ptr<LrWpanRadioEnergyModel> lrWpanRadioEnergyModel)
 {
   m_lrWpanRadioEnergyModel = lrWpanRadioEnergyModel;
+}
+
+Ptr<LrWpanRadioEnergyModel> LrWpanPhy::GetLrWpanRadioEnergyModel ()
+{
+  return m_lrWpanRadioEnergyModel;
 }
 
 void LrWpanPhy::ChangeToOffState()

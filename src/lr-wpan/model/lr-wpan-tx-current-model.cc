@@ -54,7 +54,7 @@ LinearLrWpanTxCurrentModel::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::LinearLrWpanTxCurrentModel")
     .SetParent<LrWpanTxCurrentModel> ()
-    .SetGroupName ("Wifi")
+    .SetGroupName ("Energy")
     .AddConstructor<LinearLrWpanTxCurrentModel> ()
     .AddAttribute ("Eta", "The efficiency of the power amplifier.",
                    DoubleValue (0.10),
@@ -65,7 +65,7 @@ LinearLrWpanTxCurrentModel::GetTypeId (void)
                    MakeDoubleAccessor (&LinearLrWpanTxCurrentModel::m_voltage),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("IdleCurrent", "The current in the IDLE state (in Ampere).",
-                   DoubleValue (0.273333),
+                   DoubleValue (0.0012),//(0.273333),
                    MakeDoubleAccessor (&LinearLrWpanTxCurrentModel::m_idleCurrent),
                    MakeDoubleChecker<double> ())
   ;
@@ -86,8 +86,9 @@ double
 LinearLrWpanTxCurrentModel::CalcTxCurrent (double txPowerDbm) const
 {
   NS_LOG_FUNCTION (this << txPowerDbm);
+
   double watt = std::pow (10.0, 0.1 * (txPowerDbm - 30.0));
-  return watt / (m_voltage * m_eta) + m_idleCurrent;
+  return watt / (m_voltage * m_eta) + m_idleCurrent;  // retrun a 4.5mA at 0dB like measured with NRF52840
 }
 
 } // namespace ns3

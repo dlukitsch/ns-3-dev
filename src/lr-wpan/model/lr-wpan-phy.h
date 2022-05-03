@@ -464,6 +464,8 @@ public:
 
   void SetLrWpanRadioEnergyModel (const Ptr<LrWpanRadioEnergyModel> lrWpanRadioEnergyModel);
 
+  Ptr<LrWpanRadioEnergyModel> GetLrWpanRadioEnergyModel ();
+
   void RegisterListener (LrWpanPhyListener *listener);
 
   void UnregisterListener (LrWpanPhyListener *listener);
@@ -830,6 +832,8 @@ private:
    * example.
    */
   PacketAndStatus m_currentTxPacket;
+
+  double m_txPower;
 
   /**
    * Scheduler event of a currently running CCA request.

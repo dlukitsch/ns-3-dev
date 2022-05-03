@@ -1710,7 +1710,7 @@ LrWpanMac::PlmeSetTRXStateConfirm (LrWpanPhyEnumeration status)
       // TODO: What to do when we receive an error?
       // If we want to transmit a packet, but switching the transceiver on results
       // in an error, we have to recover somehow (and start sending again).
-      NS_FATAL_ERROR ("Error changing transceiver state");
+      NS_LOG_ERROR ("Error changing transceiver state");
     }
 }
 

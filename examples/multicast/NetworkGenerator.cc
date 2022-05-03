@@ -24,7 +24,7 @@ typedef enum
 int main (int argc, char **argv)
 {
   uint32_t numNodes = 100;
-  std::string modelName = "./examples/multicast/100_NodesRandomRectangle.csv";
+  std::string modelName = "./examples/multicast/temp.csv";
   uint32_t seed = 0;
 
   positionAllocatorsType allocator = ERandomRectanglePositionAllocator;
@@ -36,7 +36,7 @@ int main (int argc, char **argv)
 
   Ptr<PositionAllocator> pAllocator;
 
-  seed = seed ? seed : std::time(0);
+  seed = seed ? seed : std::time(NULL);
   RngSeedManager::SetSeed (seed);  // Changes seed to the epoch seconds
   RngSeedManager::SetRun (0);   // Changes run number to the current run number
 
@@ -45,11 +45,11 @@ int main (int argc, char **argv)
     case EGridPositionAllocator:
     {
       Ptr<GridPositionAllocator> localAllocator = CreateObject<GridPositionAllocator>();
-      localAllocator->SetAttribute("MinX", DoubleValue (0.0)); // X starting value
-      localAllocator->SetAttribute("MinY", DoubleValue (0.0)); // Y starting value
-      localAllocator->SetAttribute("DeltaX", DoubleValue (100.0)); // x increment
-      localAllocator->SetAttribute("DeltaY", DoubleValue (100.0)); // y increment after one line
-      localAllocator->SetAttribute("GridWidth", UintegerValue (100)); // number of nodes in one line
+      localAllocator->SetAttribute("MinX", DoubleValue (3300.0)); // X starting value
+      localAllocator->SetAttribute("MinY", DoubleValue (1540.0)); // Y starting value
+      localAllocator->SetAttribute("DeltaX", DoubleValue (110.0)); // x increment
+      localAllocator->SetAttribute("DeltaY", DoubleValue (110.0)); // y increment after one line
+      localAllocator->SetAttribute("GridWidth", UintegerValue (15)); // number of nodes in one line
       localAllocator->SetAttribute("LayoutType", StringValue ("RowFirst"));
       pAllocator = localAllocator;
       break;
@@ -105,7 +105,7 @@ int main (int argc, char **argv)
 
   std::ofstream modelFile;
   modelFile.open (modelName, std::ios::out | std::ios::trunc);
-  modelFile << "ID,x,y,z,Sender,Receiver,Interference Sender,Interference Receiver,SeedValue: " << seed << " RumValue: 0"<< std::endl;
+  modelFile << "ID,x,y,z,Sender,Receiver,Interference Sender,Interference Receiver,SeedValue: " << seed << " RunValue: 0"<< std::endl;
 
   // iterate over the mobility-model to get the positions
   for(uint i = 0; i < numNodes; i++)

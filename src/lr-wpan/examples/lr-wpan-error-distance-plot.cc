@@ -74,8 +74,8 @@ int main (int argc, char *argv[])
   std::ostringstream os;
   std::ofstream berfile ("802.15.4-psr-distance.plt");
 
-  int minDistance = 1;
-  int maxDistance = 200;  // meters
+  int minDistance = 75;
+  int maxDistance = 151;  // meters
   int increment = 1;
   int maxPackets = 1000;
   int packetSize = 20;

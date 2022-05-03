@@ -130,20 +130,20 @@ Ptr<Ipv6Route> RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv6Header &he
   if(!p)
   {
     NS_LOG_DEBUG ("Packet is == 0");
-    return route;
+    return (Ptr<Ipv6Route>)0;
   }
 
   Ptr<Ipv6L3Protocol> l3protocol = m_myAddress->GetObject<Ipv6L3Protocol>();
   if(!l3protocol)
   {
     NS_FATAL_ERROR("Error: No Ipv6 Layer3 Protocol available!");
-    return route;
+    return (Ptr<Ipv6Route>)0;
   }
 
   if(!header.GetDestinationAddress().IsMulticast())
   {
     NS_LOG_DEBUG ("Mpl cannot handle unicast messages use another routing protocol!");
-    return route;
+    return (Ptr<Ipv6Route>)0;
   }
 
   route = FindRoute(dst, Ipv6Address::GetZero());
@@ -181,7 +181,8 @@ Ptr<Ipv6Route> RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv6Header &he
 
   InsertMessage(pDataMessage, dst, m_seedID);
 
-  return route;
+
+  return (Ptr<Ipv6Route>)0; // sending of data-messages is handled by trickle-timers
 }
 
 

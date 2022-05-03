@@ -134,10 +134,11 @@ LrWpanRadioEnergyModelHelper::DoInstall (Ptr<NetDevice> device,
   LrWpanPhy->RegisterListener (model->GetPhyListener ());
   //
   if (m_txCurrentModel.GetTypeId ().GetUid ())
-    {
-      Ptr<LrWpanTxCurrentModel> txcurrent = m_txCurrentModel.Create<LrWpanTxCurrentModel> ();
-      model->SetTxCurrentModel (txcurrent);
-    }
+    model->SetTxCurrentModel (m_txCurrentModel.Create<LrWpanTxCurrentModel> ());
+  else
+  {
+    model->SetTxCurrentModel (CreateObject<LinearLrWpanTxCurrentModel>());
+  }
   return model;
 }
 

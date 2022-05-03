@@ -308,6 +308,10 @@ private:
   /// This variable keeps track of the total energy consumed by this model in watts.
   TracedValue<double> m_totalEnergyConsumption;
 
+  TracedValue<bool> m_totalEnergyDepleated;
+
+  TracedCallback<Time, bool, bool> m_DepletionStateLogger;
+
   // State variables.
   int m_currentState;  ///< current state the radio is in
   Time m_lastUpdateTime;          ///< time stamp of previous energy update

@@ -22,9 +22,11 @@ StatisticsHelper::~StatisticsHelper()
 
 }
 
-void StatisticsHelper::Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev)
+void StatisticsHelper::Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev, bool withEnergyModel, uint32_t simEndTime)
 {
   Ptr<Statistics> agent = m_agentFactory.Create<Statistics>();
+  agent->SetAttribute("SimEndTime", DoubleValue (simEndTime));
+
   node->AggregateObject(agent);
 
   agent->SetNodeId(node->GetId());
@@ -33,7 +35,7 @@ void StatisticsHelper::Install(Ptr<Node> node, Ptr<LrWpanNetDevice> netDev)
   NS_ASSERT_MSG(phy, "ERROR: No LrWPAN Phy found!");
 
   // Set the trace-sinks for the nodes
-  agent->InstallTraces(phy);
+  agent->InstallTraces(phy, withEnergyModel);
 }
 
 

@@ -1,7 +1,9 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 #include <iostream>
+#include <cstdlib>
 #include <cmath>
+#include <string>
 #include "ns3/aodv-ipv6-helper.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -12,8 +14,11 @@
 #include "ns3/lr-wpan-helper.h"
 #include "ns3/sixlowpan-helper.h"
 #include "ns3/netanim-module.h"
+#include "ns3/statistics-helper.h"
 
 using namespace ns3;
+
+static const std::string filename = "aodv-lrwpan";
 
 int main (int argc, char **argv)
 {
@@ -22,6 +27,10 @@ int main (int argc, char **argv)
 
   LogComponentEnable ("Ping6Application", LOG_LEVEL_ALL);
 
+  std::string simName = filename;
+  std::string protocol = "Flooding";
+  std::string input = "./examples/multicast/stdModel.csv";
+  std::string path = "./output/" + simName + "/";
 
   NodeContainer nodes;
 
@@ -45,6 +54,9 @@ int main (int argc, char **argv)
   cmd.AddValue ("step", "Grid step, m", step);
 
   cmd.Parse (argc, argv);
+
+  LrWpanHelper lrWpanHelper;
+  StatisticsHelper statHelper;
 
 
   std::cout << "Creating " << (unsigned)size << " nodes " << step << " m apart.\n";
@@ -112,6 +124,10 @@ int main (int argc, char **argv)
   Simulator::Stop (Seconds (totalTime));
   Simulator::Run ();
   Simulator::Destroy ();
+
+  auto folderName = "results";
+  std::system(("mkdir -p " + path + folderName).c_str());
+  statHelper.PrintResultsCsvStyle(nodes, path + folderName + "/" + simName + ".csv", true, true);
 
   return 0;
 }
