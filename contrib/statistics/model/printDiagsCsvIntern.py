@@ -73,6 +73,8 @@ def main(argv):
     ts_medianDelay = []
     ts_varianceDelay = []
 
+    ts_nodeLifetime = []
+
     ts_txOff = []
     ts_txOn = []
     ts_txBusy = []
@@ -144,15 +146,17 @@ def main(argv):
         ts_medianDelay.append(dataset.iloc[:,40].tolist())
         ts_varianceDelay.append(dataset.iloc[:,41].tolist())
 
-        ts_txOff.append(dataset.iloc[:,42].tolist())
-        ts_txOn.append(dataset.iloc[:,43].tolist())
-        ts_txBusy.append(dataset.iloc[:,44].tolist())
-        ts_rxOff.append(dataset.iloc[:,45].tolist())
-        ts_rxOn.append(dataset.iloc[:,46].tolist())
-        ts_rxBusy.append(dataset.iloc[:,47].tolist())
-        ts_idle.append(dataset.iloc[:,48].tolist())
-        ts_txRxOff.append(dataset.iloc[:,49].tolist())
-        ts_busy.append(dataset.iloc[:,50].tolist())
+        ts_nodeLifetime.append(dataset.iloc[:,42].tolist())
+
+        ts_txOff.append(dataset.iloc[:,43].tolist())
+        ts_txOn.append(dataset.iloc[:,44].tolist())
+        ts_txBusy.append(dataset.iloc[:,45].tolist())
+        ts_rxOff.append(dataset.iloc[:,46].tolist())
+        ts_rxOn.append(dataset.iloc[:,47].tolist())
+        ts_rxBusy.append(dataset.iloc[:,48].tolist())
+        ts_idle.append(dataset.iloc[:,49].tolist())
+        ts_txRxOff.append(dataset.iloc[:,50].tolist())
+        ts_busy.append(dataset.iloc[:,51].tolist())
 
     ts_nodeIdsInt = ts_nodeIdsIntList[1]
     ts_nodeIds = ["Node " + str(int) for int in ts_nodeIdsInt]
@@ -222,9 +226,9 @@ def main(argv):
     fig_axes[0, 1].set_xlabel("Network Nodes")
     fig_axes[0, 1].set_ylabel("# of Bytes")
     fig_axes[0, 1].set_title("Successfully Sent Bytes")
-    rects.append(fig_axes[0, 1].bar(X+0*width, ts_succSentBytes[1], width))
-    rects.append(fig_axes[0, 1].bar(X+1*width, ts_succSentDataBytes[1], width))
-    rects.append(fig_axes[0, 1].bar(X+2*width, ts_succSentControlBytes[1], width))
+    rects.append(fig_axes[0, 1].bar(X+0*width, ts_succSentBytes[1], width, yerr=np.sqrt(ts_succSentBytes[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[0, 1].bar(X+1*width, ts_succSentDataBytes[1], width, yerr=np.sqrt(ts_succSentDataBytes[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[0, 1].bar(X+2*width, ts_succSentControlBytes[1], width, yerr=np.sqrt(ts_succSentControlBytes[2]), align='center', ecolor='black', capsize=10))
     fig_axes[0, 1].set_xticks(X+width)
     fig_axes[0, 1].set_xticklabels(ts_nodeIds)
     fig_axes[0, 1].legend(labels = ["Bytes", "Data-Bytes", "Control-Bytes"])
@@ -235,9 +239,9 @@ def main(argv):
     fig_axes[1, 0].set_xlabel("Network Nodes")
     fig_axes[1, 0].set_ylabel("# of Packets")
     fig_axes[1, 0].set_title("Successfully Received Packets")
-    rects.append(fig_axes[1, 0].bar(X+0*width, ts_succRecPackets[1], width))
-    rects.append(fig_axes[1, 0].bar(X+1*width, ts_succRecDataPackets[1], width))
-    rects.append(fig_axes[1, 0].bar(X+2*width, ts_succRecControlPackets[1], width))
+    rects.append(fig_axes[1, 0].bar(X+0*width, ts_succRecPackets[1], width, yerr=np.sqrt(ts_succRecPackets[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[1, 0].bar(X+1*width, ts_succRecDataPackets[1], width, yerr=np.sqrt(ts_succRecDataPackets[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[1, 0].bar(X+2*width, ts_succRecControlPackets[1], width, yerr=np.sqrt(ts_succRecControlPackets[2]), align='center', ecolor='black', capsize=10))
     fig_axes[1, 0].set_xticks(X+width)
     fig_axes[1, 0].set_xticklabels(ts_nodeIds)
     fig_axes[1, 0].legend(labels = ["Packets", "Data-Packets", "Control-Packets"])
@@ -248,9 +252,9 @@ def main(argv):
     fig_axes[1, 1].set_xlabel("Network Nodes")
     fig_axes[1, 1].set_ylabel("# of Bytes")
     fig_axes[1, 1].set_title("Successfully Received Bytes")
-    rects.append(fig_axes[1, 1].bar(X+0*width, ts_succRecBytes[1], width))
-    rects.append(fig_axes[1, 1].bar(X+1*width, ts_succRecDataBytes[1], width))
-    rects.append(fig_axes[1, 1].bar(X+2*width, ts_succRecControlBytes[1], width))
+    rects.append(fig_axes[1, 1].bar(X+0*width, ts_succRecBytes[1], width, yerr=np.sqrt(ts_succRecBytes[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[1, 1].bar(X+1*width, ts_succRecDataBytes[1], width, yerr=np.sqrt(ts_succRecDataBytes[2]), align='center', ecolor='black', capsize=10))
+    rects.append(fig_axes[1, 1].bar(X+2*width, ts_succRecControlBytes[1], width, yerr=np.sqrt(ts_succRecControlBytes[2]), align='center', ecolor='black', capsize=10))
     fig_axes[1, 1].set_xticks(X+width)
     fig_axes[1, 1].set_xticklabels(ts_nodeIds)
     fig_axes[1, 1].legend(labels = ["Bytes", "Data-Bytes", "Control-Bytes"])

@@ -33,7 +33,7 @@ def main(argv):
     for filepath in filepaths:
         dataset = pd.read_csv(filepath,skipinitialspace=True) #loading the data
         dataset.apply (pd.to_numeric, errors='coerce')
-        dataset = dataset.dropna() #replace empty days with 0 packets
+        dataset = dataset.fillna(0) #replace empty days with 0 packets
         datasets.append(dataset)
 
     numRows = len(datasets[0])
