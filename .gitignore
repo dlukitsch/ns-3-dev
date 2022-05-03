@@ -38,3 +38,8 @@ build/
 /.project
 
 version.cache
+
+output
+.settings
+*.xml
+manualPlotScripts/*.pdf
