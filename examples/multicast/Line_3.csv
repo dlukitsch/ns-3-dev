@@ -1,0 +1,4 @@
+ID,x,y,z,Sender,Receiver,Interference Sender,Interference Receiver
+0,0,0,0,2,,,
+1,110,0,0,,,,
+2,220,0,0,,0,,
