@@ -3,16 +3,17 @@
 # read file where the simulations to do are configured
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd $SCRIPT_DIR
-SIM_FILE="simConfig.csv"
-COMAPRE_DIAGS="compareDiagsConfig.csv"
+SIM_FILE="simConfigs/simConfig.csv"
+COMAPRE_DIAGS="simConfigs/compareDiagsConfig.csv"
 
 [ -z $1 ] || SIM_FILE="$1"
+[ -z $2 ] || COMAPRE_DIAGS="$2"
 
 IFS=","
 #skip the first line with the headers
 tail -n +2 $SIM_FILE | 
     while read simFile simRuns protocol simName nodeCfg mobility seedValue packetSize numPackets sendIntervall simEndTime txPower channel interferencePacketSize interferenceSendIntervall interferenceTxPower interferenceChannel \
-    proactiveForwarding reactiveForwarding seedSetEntryLifetime dataMessageIMin dataMessageIMax dataMessageK dataMessageTimerExpirations controlMessageIMin controlMessageIMax controlMessageK controlMessageTimerExpirations numHops ; do
+    proactiveForwarding reactiveForwarding seedSetEntryLifetime dataMessageIMin dataMessageIMax dataMessageK dataMessageTimerExpirations controlMessageIMin controlMessageIMax controlMessageK controlMessageTimerExpirations numHops energyModelEnabled initialNodeEnergy; do
       [ -z $simFile ] && unset FILE || FILE="${simFile}"
       [ -z $simRuns ] && unset SIM_RUNS || SIM_RUNS=" --simRuns=${simRuns}"
       [ -z $protocol ] && unset PROTOCOL || PROTOCOL=" --protocol=${protocol}"
@@ -44,12 +45,15 @@ tail -n +2 $SIM_FILE |
       [ -z $controlMessageTimerExpirations ]  && unset C_EX || C_EX=" --controlMessageTimerExpirations=${controlMessageTimerExpirations}"
       [ -z $numHops ]  && unset  HOPS || HOPS=" --numHops=${numHops}"
 
+      [ -z $energyModelEnabled ]  && unset ENABLE_ENERGY_MODEL || ENABLE_ENERGY_MODEL=" --energyModelEnabled=${energyModelEnabled}"
+      [ -z $initialNodeEnergy ]  && unset  INITIAL_ENERGY || INITIAL_ENERGY=" --initialNodeEnergy=${initialNodeEnergy}"
+
       
       rm -r output/${simName} &> /dev/null
       mkdir -p output/${simName}
-      CMD=--run=${FILE}${SIM_RUNS}${PROTOCOL}${NAME}${INPUT}${MOBILITY}${RNG_INIT}${PACKET_SIZE}${PACKET_NUM}${SEND_INTERVALL}${POWER}${CHANNEL}${TIME}${IN_PACKET_SIZE}${IN_PACKET_INTERVAL}${IN_POWER}${IN_CHANNEL}${PROACTIVE}${REACTIVE}${LIFETIME}${D_I_MIN}${D_I_MAX}${D_K}${D_EX}${C_I_MIN}${C_I_MAX}${C_K}${C_EX}${HOPS}
+      CMD=--run=${FILE}${SIM_RUNS}${PROTOCOL}${NAME}${INPUT}${MOBILITY}${RNG_INIT}${PACKET_SIZE}${PACKET_NUM}${SEND_INTERVALL}${POWER}${CHANNEL}${TIME}${IN_PACKET_SIZE}${IN_PACKET_INTERVAL}${IN_POWER}${IN_CHANNEL}${PROACTIVE}${REACTIVE}${LIFETIME}${D_I_MIN}${D_I_MAX}${D_K}${D_EX}${C_I_MIN}${C_I_MAX}${C_K}${C_EX}${HOPS}${ENABLE_ENERGY_MODEL}${INITIAL_ENERGY}
       echo "./waf ${CMD}"
-      ./waf $CMD
+       ./waf $CMD
 
       # iterate over the subdirectories of the current simulation to unify the result-files and return various result types (mean, median, std)
       for directory in output/${simName}/*; do

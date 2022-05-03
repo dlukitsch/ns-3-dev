@@ -1,7 +1,7 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-    obj = bld.create_ns3_program('Generic_Model', ['network', 'sixlowpan', 'internet', 'lr-wpan', 'internet-apps', 'netanim', 'mpl', 'topology-read' , 'statistics'])
+    obj = bld.create_ns3_program('Generic_Model', ['network', 'sixlowpan', 'internet', 'lr-wpan', 'internet-apps', 'netanim', 'mpl', 'aodv', 'topology-read' , 'statistics'])
     obj.source = 'Generic_Model.cc'
     
     obj = bld.create_ns3_program('NetworkGenerator', ['network', 'lr-wpan'])
