@@ -178,6 +178,9 @@ private:
 
   bool HandleControlMessage(Ptr<Packet> p, Ipv6Address mplDataDomain);
 
+  void DeleteMessagesForDomain(Ipv6Address domain);
+  bool CheckIfSubscriptedToDomain(Ipv6Address dataDomain);
+
   struct cmpIpv6Address {
       bool operator()(const Ipv6Address& a, const Ipv6Address& b) const {
           return a < b;

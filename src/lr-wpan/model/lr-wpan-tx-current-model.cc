@@ -65,7 +65,7 @@ LinearLrWpanTxCurrentModel::GetTypeId (void)
                    MakeDoubleAccessor (&LinearLrWpanTxCurrentModel::m_voltage),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("IdleCurrent", "The current in the IDLE state (in Ampere).",
-                   DoubleValue (0.0012),//(0.273333),
+                   DoubleValue (0.006746667),
                    MakeDoubleAccessor (&LinearLrWpanTxCurrentModel::m_idleCurrent),
                    MakeDoubleChecker<double> ())
   ;
@@ -88,7 +88,7 @@ LinearLrWpanTxCurrentModel::CalcTxCurrent (double txPowerDbm) const
   NS_LOG_FUNCTION (this << txPowerDbm);
 
   double watt = std::pow (10.0, 0.1 * (txPowerDbm - 30.0));
-  return watt / (m_voltage * m_eta) + m_idleCurrent;  // retrun a 4.5mA at 0dB like measured with NRF52840
+  return watt / (m_voltage * m_eta) + m_idleCurrent;
 }
 
 } // namespace ns3

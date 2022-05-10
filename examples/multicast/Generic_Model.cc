@@ -23,6 +23,7 @@
 #include "ns3/node.h"
 #include "ns3/energy-module.h"
 #include "ns3/lr-wpan-radio-energy-model-helper.h"
+#include "ns3/aodv-ipv6-helper.h"
 
 using namespace ns3;
 
@@ -33,7 +34,7 @@ NS_LOG_COMPONENT_DEFINE (filename);
 int main (int argc, char *argv[])
 {
   std::string simName = filename;
-  std::string protocol = "Flooding";
+  std::string protocol = "Aodv";
   std::string input = "./examples/multicast/stdModel.csv";
 
   uint32_t packetSize = 50;
@@ -162,7 +163,7 @@ int main (int argc, char *argv[])
       mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
                                "Mode", StringValue ("Time"),
                                "Time", TimeValue (Seconds (10)),  // time after which the speed and direction is changed
-                               "Bounds", RectangleValue (Rectangle (-1000.0, 1000.0, -1000.0, 1000.0)), // TODO set correct bounds for model
+                               "Bounds", RectangleValue (Rectangle (0.0, 1000.0, -50.0, 500.0)), // TODO set correct bounds for model
                                "Speed", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=5.0]"),
                                "Direction", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=6.283184]")
       );
@@ -227,14 +228,14 @@ int main (int argc, char *argv[])
 
     lrWpanHelper.AssociateToPan (devContainer, 10);
     lrWpanHelper.EnablePcap(path+filename , panIDContainers[0], true); // enable pcap generation only for normal nodes
-    lrWpanHelper.EnableAsciiAll (ascii.CreateFileStream (path  + filename + ".tr"));
+    //lrWpanHelper.EnableAsciiAll (ascii.CreateFileStream (path  + filename + ".tr"));
 
 
     /* Install IPv4/IPv6 stack */
     NS_LOG_INFO ("Install Internet stack.");
     InternetStackHelper internetv6;
 
-    // Install IPv6 Stack on all nodes without MPL
+    // Install IPv6 Stack on all nodes without MPL and without adov
     for(auto it = topology.begin(); it != topology.end(); it++)
     {
       if(protocol == "Flooding" || std::get<3>(it->second) != -1 || std::get<4>(it->second) != -1)
@@ -266,6 +267,29 @@ int main (int argc, char *argv[])
         if(std::get<3>(it->second) == -1 && std::get<4>(it->second) == -1)
           internetv6.Install (nodes.Get(it->first));
       }
+    }
+    else if(protocol == "Aodv") // install aodv
+    {
+      AodvIpv6Helper aodv;
+      Ipv6ListRoutingHelper routingHelperWithAodv;
+
+      routingHelperWithAodv.Add (aodv, 0); // has effect on the next Install ()
+      internetv6.SetRoutingHelper(routingHelperWithAodv);
+
+      for(auto it = topology.begin(); it != topology.end(); it++)
+      {
+        if(std::get<3>(it->second) == -1 && std::get<4>(it->second) == -1)
+          internetv6.Install (nodes.Get(it->first));
+      }
+    }
+    else if(protocol == "Flooding")
+    {
+
+    }
+    else
+    {
+      NS_LOG_ERROR("Wrong protocol specified!");
+      return -1;
     }
 
     // Install 6LowPan layer
@@ -321,6 +345,21 @@ int main (int argc, char *argv[])
 
           nodes.Get(nodeIndex)->GetObject<Ipv6L3Protocol>()->SetAttribute ("SendIcmpv6Redirect", BooleanValue (false));
         }
+        else if(protocol == "Aodv")
+        {
+          Ptr<Icmpv6L4Protocol> icmpProtocol = nodes.Get(nodeIndex)->GetObject<Icmpv6L4Protocol>();
+
+          icmpProtocol->SetAttribute("DAD", BooleanValue(false));
+          icmpProtocol->SetAttribute("MaxUnicastSolicit", IntegerValue(0));
+          icmpProtocol->SetAttribute("MaxMulticastSolicit", IntegerValue(0));
+
+          nodes.Get(nodeIndex)->GetObject<Ipv6L3Protocol>()->SetAttribute ("SendIcmpv6Redirect", BooleanValue (false));
+        }
+        else
+        {
+          NS_LOG_ERROR("Wrong protocol specified!");
+          return -1;
+        }
 
         interfaces.SetForwarding (nodeIndex, true);
 
@@ -331,6 +370,15 @@ int main (int argc, char *argv[])
           else if(protocol == "Flooding")
           {
             clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetLinkLocalAddress(std::get<1>(it->second))));
+          }
+          else if(protocol == "Aodv")
+          {
+            clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetAddress(std::get<1>(it->second), 0)));
+          }
+          else
+          {
+            NS_LOG_ERROR("Wrong protocol specified!");
+            return -1;
           }
 
           clientHelper.SetAttribute("RemotePort", UintegerValue(10));

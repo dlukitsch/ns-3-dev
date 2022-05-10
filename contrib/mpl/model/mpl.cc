@@ -146,6 +146,12 @@ Ptr<Ipv6Route> RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv6Header &he
     return (Ptr<Ipv6Route>)0;
   }
 
+  if(!CheckIfSubscriptedToDomain(dst))
+  {
+    NS_LOG_DEBUG ("Not subscribed to MPL-domain!");
+    return (Ptr<Ipv6Route>)0;
+  }
+
   route = FindRoute(dst, Ipv6Address::GetZero());
 
   // process a control messages
@@ -216,6 +222,9 @@ bool RoutingProtocol::RouteInput  (Ptr<const Packet> p, const Ipv6Header &header
     NS_LOG_DEBUG("No registered Mpl domain found!");
     return false;
   }
+
+  if(!CheckIfSubscriptedToDomain(dst))
+    return false;
 
   // implement steps defined in 10.3 of RFC7731
   if(m_EnableReactiveForwarding && bytes[1] == MPL_CONTROL_DOMAIN)
@@ -452,6 +461,9 @@ void RoutingProtocol::DeleteSeedSetEntry(Ipv6Address domain, uint64_t seedId)
       delete seed_it->second;
     }
   }
+
+  // delete all the data messages
+  DeleteMessagesForDomain(domain);
 
   if(domain_it->second.empty())
     m_SeedSet.erase(domain);
@@ -933,6 +945,38 @@ bool RoutingProtocol::HandleControlMessage(Ptr<Packet> p, Ipv6Address mplDataDom
   return inconsistentEvent;
 }
 
+void RoutingProtocol::DeleteMessagesForDomain(Ipv6Address domain)
+{
+  auto domain_it = m_BufferedMessageSet.begin();
+  if(domain_it != m_BufferedMessageSet.end())
+  {
+    {
+      for(auto seed_it = domain_it->second.begin(); seed_it != domain_it->second.end(); seed_it++)
+      {
+        for(auto message_it = seed_it->second.begin(); message_it != seed_it->second.end(); message_it++)
+        {
+          delete message_it->second;
+        }
+        seed_it->second.clear();
+      }
+      domain_it->second.clear();
+    }
+    m_BufferedMessageSet.erase(domain);
+  }
+}
+
+bool RoutingProtocol::CheckIfSubscriptedToDomain(Ipv6Address dataDomain)
+{
+  // check both control an data domain
+  uint8_t tempBytes[16];
+  dataDomain.GetBytes(tempBytes);
+  tempBytes[1] = MPL_DATA_DOMAIN; // transition possible control domain to a data domain
+  Ipv6Address tempTest = Ipv6Address(tempBytes);
+
+  return m_subscribedDataDomains.find(tempTest) != m_subscribedDataDomains.end();
+
+}
+
 void RoutingProtocol::SubscribeToDataDomain(Ipv6Address dataDomain)
 {
   m_subscribedDataDomains.insert(dataDomain);
@@ -954,22 +998,21 @@ void RoutingProtocol::UnsubscribeFromDataDomain(Ipv6Address dataDomain)
   if(m_EnableReactiveForwarding)
     RemoveControlTimer(dataDomain);
 
-  auto domain_it = m_BufferedMessageSet.begin();
-  if(domain_it != m_BufferedMessageSet.end())
+  m_subscribedDataDomains.erase(dataDomain);
+
+  // delete all the seed-set entries
+  auto domainSet = m_SeedSet.find(dataDomain);
+  if(domainSet != m_SeedSet.end())
   {
-    {
-      for(auto seed_it = domain_it->second.begin(); seed_it != domain_it->second.end(); seed_it++)
-      {
-        for(auto message_it = seed_it->second.begin(); message_it != seed_it->second.end(); message_it++)
-        {
-          delete message_it->second;
-        }
-        seed_it->second.clear();
-      }
-      domain_it->second.clear();
-    }
-    m_BufferedMessageSet.erase(dataDomain);
+    for(auto it = domainSet->second.begin(); it != domainSet->second.end(); it++)
+      DeleteSeedSetEntry(dataDomain, it->first);
+
+    domainSet->second.clear();
+    m_SeedSet.erase(dataDomain);
   }
+
+  // delete all the data messages
+  DeleteMessagesForDomain(dataDomain);
 
   Ptr<Ipv6L3Protocol> l3prot = m_myAddress->GetObject<Ipv6L3Protocol>();
   if(!l3prot)

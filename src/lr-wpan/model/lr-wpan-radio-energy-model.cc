@@ -16,32 +16,32 @@ NS_OBJECT_ENSURE_REGISTERED (LrWpanRadioEnergyModel);
 TypeId
 LrWpanRadioEnergyModel::GetTypeId (void)
 {
-  // Standard values taken from Nordic nrf52840
+  // Standard values taken from Nordic nrf52840 for +4dBm
   static TypeId tid = TypeId ("ns3::LrWpanRadioEnergyModel")
     .SetParent<DeviceEnergyModel> ()
     .SetGroupName ("Energy")
     .AddConstructor<LrWpanRadioEnergyModel> ()
     .AddAttribute ("TxOnCurrentA",
                    "The default Tx on idle current in Ampere.",
-                   DoubleValue (0.0075),
+                   DoubleValue (0.0059),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetTxOnCurrentA,
                                        &LrWpanRadioEnergyModel::GetTxOnCurrentA),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("RxOnCurrentA",
                    "The default Rx on idle current in Ampere.",
-                   DoubleValue (0.0075),
+                   DoubleValue (0.0059),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetRxOnCurrentA,
                                        &LrWpanRadioEnergyModel::GetRxOnCurrentA),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("TxSendCurrentA",
                    "The radio TX current in Ampere.",
-                   DoubleValue (0.08),
+                   DoubleValue (0.0101),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetTxCurrentA,
                                        &LrWpanRadioEnergyModel::GetTxCurrentA),
                    MakeDoubleChecker<double> ())
     .AddAttribute ("RxReceiveCurrentA",
                    "The radio RX current in Ampere.",
-                   DoubleValue (0.08),
+                   DoubleValue (0.00875),
                    MakeDoubleAccessor (&LrWpanRadioEnergyModel::SetRxCurrentA,
                                        &LrWpanRadioEnergyModel::GetRxCurrentA),
                    MakeDoubleChecker<double> ())
@@ -245,6 +245,8 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
       SetLrWpanRadioState (newState);
       m_nPendingChangeState--;
       m_totalEnergyDepleated = true;
+      m_totalEnergyConsumption = m_source->GetInitialEnergy();
+
       return;
     }
 
@@ -294,8 +296,8 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
       SetLrWpanRadioState (newState);
 
       // some debug message
-      NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Total energy consumption is " <<
-                    m_totalEnergyConsumption << "J");
+      std::cout << "LrWpanRadioEnergyModel:Total energy consumption is " <<
+                    m_totalEnergyConsumption << "J" << std::endl;
     }
 
   m_nPendingChangeState--;
@@ -308,6 +310,8 @@ LrWpanRadioEnergyModel::HandleEnergyDepletion (void)
   NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Energy is depleted!");
   // invoke energy depletion callback, if set.
   m_totalEnergyDepleated = true;
+  m_totalEnergyConsumption = m_source->GetInitialEnergy();
+
 
   if (!m_energyDepletionCallback.IsNull ())
     {
