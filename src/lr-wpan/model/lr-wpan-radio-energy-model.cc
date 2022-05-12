@@ -296,8 +296,8 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
       SetLrWpanRadioState (newState);
 
       // some debug message
-      std::cout << "LrWpanRadioEnergyModel:Total energy consumption is " <<
-                    m_totalEnergyConsumption << "J" << std::endl;
+      NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Total energy consumption is " <<
+                    m_totalEnergyConsumption << "J");
     }
 
   m_nPendingChangeState--;

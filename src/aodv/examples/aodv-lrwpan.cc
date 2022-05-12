@@ -15,6 +15,12 @@
 #include "ns3/sixlowpan-helper.h"
 #include "ns3/netanim-module.h"
 #include "ns3/statistics-helper.h"
+#include <ns3/single-model-spectrum-channel.h>
+#include <ns3/multi-model-spectrum-channel.h>
+#include "ns3/lr-wpan-radio-energy-model-helper.h"
+#include "ns3/energy-module.h"
+#include "ns3/lr-wpan-module.h"
+
 
 using namespace ns3;
 
@@ -22,14 +28,12 @@ static const std::string filename = "aodv-lrwpan";
 
 int main (int argc, char **argv)
 {
-  LogComponentEnable ("AodvIpv6RoutingProtocol", LOG_LEVEL_ALL);
+//  LogComponentEnable ("AodvIpv6RoutingProtocol", LOG_LEVEL_ALL);
  // LogComponentEnable ("AodvIpv6RoutingTable", LOG_LEVEL_ALL);
 
-  LogComponentEnable ("Ping6Application", LOG_LEVEL_ALL);
+ // LogComponentEnable ("Ping6Application", LOG_LEVEL_ALL);
 
   std::string simName = filename;
-  std::string protocol = "Flooding";
-  std::string input = "./examples/multicast/stdModel.csv";
   std::string path = "./output/" + simName + "/";
 
   NodeContainer nodes;
@@ -38,7 +42,7 @@ int main (int argc, char **argv)
   /// Distance between nodes, meters
   double step = 50;
   /// Simulation time, seconds
-  double totalTime = 20;
+  double totalTime = 50;
   /// Write per-device PCAP traces if true
   bool pcap = true;
   /// Print routes if true
@@ -58,6 +62,9 @@ int main (int argc, char **argv)
   LrWpanHelper lrWpanHelper;
   StatisticsHelper statHelper;
 
+  auto folderName = "results";
+  std::system(("rm -rf " + path).c_str());
+  std::system(("mkdir -p " + path + folderName).c_str());
 
   std::cout << "Creating " << (unsigned)size << " nodes " << step << " m apart.\n";
   nodes.Create (size);
@@ -82,8 +89,30 @@ int main (int argc, char **argv)
 
   LrWpanHelper lrwpanHelper;
   NetDeviceContainer netDevices = lrwpanHelper.Install(nodes);
+
+  LrWpanSpectrumValueHelper svh;
+  Ptr<SpectrumValue> psd = svh.CreateTxPowerSpectralDensity (0, 11); // 0dBm and channel 11
+
+
+  BasicEnergySourceHelper basicSourceHelper;
+  basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (100));
+  basicSourceHelper.Set ("PeriodicEnergyUpdateInterval", TimeValue (Simulator::GetMaximumSimulationTime())); // do not reload the battery
+  EnergySourceContainer sources = basicSourceHelper.Install(nodes);
+  LrWpanRadioEnergyModelHelper radioEnergyHelper;
+  DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (netDevices, sources);
+
+
+  for(int it = 0; it < nodes.GetN(); it++)
+  {
+    Ptr<LrWpanPhy> phy = netDevices.Get(it)->GetObject<LrWpanNetDevice>()->GetPhy();
+    phy->SetAttribute("TxPower", DoubleValue(0)); // 0dBm
+    phy->SetTxPowerSpectralDensity(psd);
+
+    statHelper.Install(nodes.Get(it), DynamicCast<LrWpanNetDevice>(netDevices.Get(it)), 1, totalTime);
+  }
+
   lrwpanHelper.AssociateToPan(netDevices, 10);
-  lrwpanHelper.EnablePcapAll("aodv_lrwpan", true);
+  lrwpanHelper.EnablePcapAll(path + simName, true);
 
   AodvIpv6Helper aodv;
   // you can configure AODV attributes here using aodv.Set(name, value)
@@ -93,7 +122,7 @@ int main (int argc, char **argv)
 
   if (printRoutes)
   {
-    Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("aodv.routes", std::ios::out | std::ios::trunc);
+    Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (path + simName + "aodv.routes", std::ios::out | std::ios::trunc);
     aodv.PrintRoutingTableAllAt (Seconds (4), routingStream);
   }
 
@@ -116,7 +145,7 @@ int main (int argc, char **argv)
   p.Start (Seconds (0));
   p.Stop (Seconds (totalTime) - Seconds (0.001));
 
-  AnimationInterface anim ("lrwpan-aodv.xml");
+  AnimationInterface anim (path + simName+ ".xml");
   anim.EnablePacketMetadata (); // Optional
 
   std::cout << "Starting simulation for " << totalTime << " s ...\n";
@@ -125,8 +154,6 @@ int main (int argc, char **argv)
   Simulator::Run ();
   Simulator::Destroy ();
 
-  auto folderName = "results";
-  std::system(("mkdir -p " + path + folderName).c_str());
   statHelper.PrintResultsCsvStyle(nodes, path + folderName + "/" + simName + ".csv", true, true);
 
   return 0;

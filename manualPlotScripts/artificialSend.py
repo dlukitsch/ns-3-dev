@@ -25,4 +25,4 @@ plt.show()
 
 #g.savefig("FacetGrid.pdf", bbox_inches='tight', dpi = 300)
 #f.savefig("relplot.pdf",  bbox_inches='tight', dpi=300)
-h.figure.savefig("artificialSend.pdf",  bbox_inches='tight', dpi=300)
+h.figure.savefig("artificialSend.svg", bbox_inches='tight', dpi=1200)

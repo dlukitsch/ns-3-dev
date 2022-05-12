@@ -23,7 +23,6 @@
 #include "ns3/node.h"
 #include "ns3/energy-module.h"
 #include "ns3/lr-wpan-radio-energy-model-helper.h"
-#include "ns3/aodv-ipv6-helper.h"
 
 using namespace ns3;
 
@@ -34,7 +33,7 @@ NS_LOG_COMPONENT_DEFINE (filename);
 int main (int argc, char *argv[])
 {
   std::string simName = filename;
-  std::string protocol = "Aodv";
+  std::string protocol = "Flooding";
   std::string input = "./examples/multicast/stdModel.csv";
 
   uint32_t packetSize = 50;
@@ -268,20 +267,6 @@ int main (int argc, char *argv[])
           internetv6.Install (nodes.Get(it->first));
       }
     }
-    else if(protocol == "Aodv") // install aodv
-    {
-      AodvIpv6Helper aodv;
-      Ipv6ListRoutingHelper routingHelperWithAodv;
-
-      routingHelperWithAodv.Add (aodv, 0); // has effect on the next Install ()
-      internetv6.SetRoutingHelper(routingHelperWithAodv);
-
-      for(auto it = topology.begin(); it != topology.end(); it++)
-      {
-        if(std::get<3>(it->second) == -1 && std::get<4>(it->second) == -1)
-          internetv6.Install (nodes.Get(it->first));
-      }
-    }
     else if(protocol == "Flooding")
     {
 
@@ -345,16 +330,6 @@ int main (int argc, char *argv[])
 
           nodes.Get(nodeIndex)->GetObject<Ipv6L3Protocol>()->SetAttribute ("SendIcmpv6Redirect", BooleanValue (false));
         }
-        else if(protocol == "Aodv")
-        {
-          Ptr<Icmpv6L4Protocol> icmpProtocol = nodes.Get(nodeIndex)->GetObject<Icmpv6L4Protocol>();
-
-          icmpProtocol->SetAttribute("DAD", BooleanValue(false));
-          icmpProtocol->SetAttribute("MaxUnicastSolicit", IntegerValue(0));
-          icmpProtocol->SetAttribute("MaxMulticastSolicit", IntegerValue(0));
-
-          nodes.Get(nodeIndex)->GetObject<Ipv6L3Protocol>()->SetAttribute ("SendIcmpv6Redirect", BooleanValue (false));
-        }
         else
         {
           NS_LOG_ERROR("Wrong protocol specified!");
@@ -370,10 +345,6 @@ int main (int argc, char *argv[])
           else if(protocol == "Flooding")
           {
             clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetLinkLocalAddress(std::get<1>(it->second))));
-          }
-          else if(protocol == "Aodv")
-          {
-            clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetAddress(std::get<1>(it->second), 0)));
           }
           else
           {
