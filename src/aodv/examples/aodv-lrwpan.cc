@@ -28,10 +28,10 @@ static const std::string filename = "aodv-lrwpan";
 
 int main (int argc, char **argv)
 {
-//  LogComponentEnable ("AodvIpv6RoutingProtocol", LOG_LEVEL_ALL);
+  LogComponentEnable ("AodvIpv6RoutingProtocol", LOG_LEVEL_ALL);
  // LogComponentEnable ("AodvIpv6RoutingTable", LOG_LEVEL_ALL);
 
- // LogComponentEnable ("Ping6Application", LOG_LEVEL_ALL);
+  LogComponentEnable ("Ping6Application", LOG_LEVEL_ALL);
 
   std::string simName = filename;
   std::string path = "./output/" + simName + "/";
@@ -63,7 +63,6 @@ int main (int argc, char **argv)
   StatisticsHelper statHelper;
 
   auto folderName = "results";
-  std::system(("rm -rf " + path).c_str());
   std::system(("mkdir -p " + path + folderName).c_str());
 
   std::cout << "Creating " << (unsigned)size << " nodes " << step << " m apart.\n";
@@ -93,6 +92,13 @@ int main (int argc, char **argv)
   LrWpanSpectrumValueHelper svh;
   Ptr<SpectrumValue> psd = svh.CreateTxPowerSpectralDensity (0, 11); // 0dBm and channel 11
 
+  for(int it = 0; it < nodes.GetN(); it++)
+  {
+    Ptr<LrWpanPhy> phy = netDevices.Get(it)->GetObject<LrWpanNetDevice>()->GetPhy();
+    phy->SetAttribute("TxPower", DoubleValue(0)); // 0dBm
+    phy->SetTxPowerSpectralDensity(psd);
+  }
+
 
   BasicEnergySourceHelper basicSourceHelper;
   basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (100));
@@ -101,18 +107,8 @@ int main (int argc, char **argv)
   LrWpanRadioEnergyModelHelper radioEnergyHelper;
   DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (netDevices, sources);
 
-
-  for(int it = 0; it < nodes.GetN(); it++)
-  {
-    Ptr<LrWpanPhy> phy = netDevices.Get(it)->GetObject<LrWpanNetDevice>()->GetPhy();
-    phy->SetAttribute("TxPower", DoubleValue(0)); // 0dBm
-    phy->SetTxPowerSpectralDensity(psd);
-
-    statHelper.Install(nodes.Get(it), DynamicCast<LrWpanNetDevice>(netDevices.Get(it)), 1, totalTime);
-  }
-
   lrwpanHelper.AssociateToPan(netDevices, 10);
-  lrwpanHelper.EnablePcapAll(path + simName, true);
+  lrwpanHelper.EnablePcapAll("./output/aodv_lrwpan", true);
 
   AodvIpv6Helper aodv;
   // you can configure AODV attributes here using aodv.Set(name, value)
@@ -122,7 +118,7 @@ int main (int argc, char **argv)
 
   if (printRoutes)
   {
-    Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (path + simName + "aodv.routes", std::ios::out | std::ios::trunc);
+    Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("aodv.routes", std::ios::out | std::ios::trunc);
     aodv.PrintRoutingTableAllAt (Seconds (4), routingStream);
   }
 
@@ -145,7 +141,7 @@ int main (int argc, char **argv)
   p.Start (Seconds (0));
   p.Stop (Seconds (totalTime) - Seconds (0.001));
 
-  AnimationInterface anim (path + simName+ ".xml");
+  AnimationInterface anim ("lrwpan-aodv.xml");
   anim.EnablePacketMetadata (); // Optional
 
   std::cout << "Starting simulation for " << totalTime << " s ...\n";

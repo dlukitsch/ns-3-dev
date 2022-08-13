@@ -45,7 +45,7 @@ NS_OBJECT_ENSURE_REGISTERED (Node);
  */
 static GlobalValue g_checksumEnabled  = GlobalValue ("ChecksumEnabled",
                                                      "A global switch to enable all checksums for all protocols",
-                                                     BooleanValue (false),
+                                                     BooleanValue (true),
                                                      MakeBooleanChecker ());
 
 TypeId 
