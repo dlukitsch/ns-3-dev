@@ -250,8 +250,7 @@ bool RoutingProtocol::RouteInput  (Ptr<const Packet> p, const Ipv6Header &header
     if(HandleControlMessage(pCopy, Ipv6Address(bytes)))
     {
       controlTimer_it->second.second = 0;
-      pTrickle->Reset();
-     // pTrickle->InconsistentEvent();  // do we need this if we already reset it??
+      pTrickle->InconsistentEvent();
       NS_LOG_DEBUG("Inconsistent Control Event happened!");
     }
     else
@@ -305,8 +304,7 @@ bool RoutingProtocol::RouteInput  (Ptr<const Packet> p, const Ipv6Header &header
     if(mplOptionHeader.GetM() && CompareSequenceNumbersSmaller(mplOptionHeader.GetSequence(), message->GetSequenceNr()))
     {
       NS_LOG_DEBUG("Performed an Inconsistent Data-Transmission Operation!");
-      message->ResetTrickle();
-     // message->GetTrickle()->InconsistentEvent();
+      message->InconsistentTrickleEvent();
     }
     else
     {
@@ -663,17 +661,22 @@ void RoutingProtocol::SendControlMessage(Ipv6Address controlDomain)
     return;
   }
 
-  if(it->second.second < m_TrickleTimerExpirationsControl)
+  if(!m_TrickleTimerExpirationsControl)
   {
-    NS_LOG_DEBUG("No need to send control message increase counter");
-    it->second.second++;
+    NS_LOG_DEBUG("Disable control timer, retransmissions set to 0");
+    it->second.first->Stop();
+    it->second.second = 0;
     return;
   }
 
-  if(!m_TrickleTimerExpirationsControl)
+  // increase the Control-Retransmission counter
+  it->second.second++;
+
+  if(it->second.second == m_TrickleTimerExpirationsControl)
   {
-    NS_LOG_DEBUG("No need to send control message Retransmissions set to 0");
-    return;
+    NS_LOG_DEBUG("Disable control timer retransmissions reached");
+    it->second.first->Stop();
+    it->second.second = 0;
   }
 
   Ptr<Packet> controlMessage = Create<Packet>();

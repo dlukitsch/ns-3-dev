@@ -22,6 +22,7 @@ public:
   TrickleTimer* GetTrickle();
   void IncreaseRetransmission();
   void ResetTrickle();
+  void InconsistentTrickleEvent();
   uint8_t GetSequenceNr();
   Ptr<Ipv6Route> GetRoute();
 

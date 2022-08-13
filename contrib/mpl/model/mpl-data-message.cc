@@ -54,6 +54,12 @@ void MplDataMessage::ResetTrickle()
   m_retransmission = 0;
 }
 
+void MplDataMessage::InconsistentTrickleEvent()
+{
+  m_trickle.InconsistentEvent();
+  m_retransmission = 0;
+}
+
 
 }
 }
