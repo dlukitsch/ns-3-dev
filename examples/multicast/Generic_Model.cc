@@ -208,9 +208,8 @@ int main (int argc, char *argv[])
           BasicEnergySourceHelper basicSourceHelper;
           basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (initialNodeEnergy));
           basicSourceHelper.Set ("PeriodicEnergyUpdateInterval", TimeValue (Simulator::GetMaximumSimulationTime())); // do not reload the battery
-          EnergySourceContainer sources = basicSourceHelper.Install(normalNodes);
-          LrWpanRadioEnergyModelHelper radioEnergyHelper;
-          DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (panIDContainers[0], sources);
+          EnergySourceContainer source = basicSourceHelper.Install(nodes.Get(it->first));
+          LrWpanRadioEnergyModelHelper radioEnergyHelper;          DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (devContainer.Get(it->first), source);
         }
         /***************************************************************************/
 
