@@ -238,47 +238,35 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
 {
   NS_LOG_FUNCTION (this << newState);
 
+  if(m_currentState == IEEE_802_15_4_PHY_FORCE_TRX_OFF && m_currentState == newState)
+    return;
+
   m_nPendingChangeState++;
 
   if (m_nPendingChangeState > 1 && newState == IEEE_802_15_4_PHY_FORCE_TRX_OFF)
-    {
-      SetLrWpanRadioState (newState);
-      m_nPendingChangeState--;
-      m_totalEnergyDepleated = true;
-      m_totalEnergyConsumption = m_source->GetInitialEnergy();
-
-      return;
-    }
-
-  if (newState != IEEE_802_15_4_PHY_FORCE_TRX_OFF)
-    {
-      m_switchToOffEvent.Cancel ();
-      Time durationToOff = GetMaximumTimeInState (newState);
-      m_switchToOffEvent = Simulator::Schedule (durationToOff, &LrWpanRadioEnergyModel::ChangeState, this, IEEE_802_15_4_PHY_FORCE_TRX_OFF);
-    }
-
-  Time duration = Simulator::Now () - m_lastUpdateTime;
-  NS_ASSERT (duration.IsPositive ()); // check if duration is valid
-
-  // energy to decrease = current * voltage * time
-  double supplyVoltage = m_source->GetSupplyVoltage ();
-  double energyToDecrease = duration.GetSeconds () * GetStateA (m_currentState) * supplyVoltage;
-
-  // update total energy consumption
-  m_totalEnergyConsumption += energyToDecrease;
-  if(m_totalEnergyConsumption >= m_source->GetInitialEnergy())
   {
-    NS_LOG_INFO("Energy usage generally too high for Energy-Source! Reset last used energy-amount to fully drain the battery!");
-    m_totalEnergyConsumption = m_source->GetInitialEnergy();
+    SetLrWpanRadioState (newState);
+    m_nPendingChangeState--;
+    EnergyDepletionEventReceived();
+    return;
   }
 
-  NS_ASSERT (m_totalEnergyConsumption <= m_source->GetInitialEnergy ());
-
-  // update last update time stamp
   m_lastUpdateTime = Simulator::Now ();
 
   // notify energy source
   m_source->UpdateEnergySource ();
+
+  // use the calculated energy from the energy-source instead of calculate a separate one that does not match with the actual energy-source
+  m_totalEnergyConsumption = m_source->GetInitialEnergy() - m_source->GetRemainingEnergy();
+
+  NS_ASSERT (m_totalEnergyConsumption <= m_source->GetInitialEnergy ());
+
+  if (newState != IEEE_802_15_4_PHY_FORCE_TRX_OFF)
+  {
+    m_switchToOffEvent.Cancel ();
+    Time durationToOff = GetMaximumTimeInState (newState);
+    m_switchToOffEvent = Simulator::Schedule (durationToOff, &LrWpanRadioEnergyModel::ChangeState, this, IEEE_802_15_4_PHY_FORCE_TRX_OFF);
+  }
 
   // in case the energy source is found to be depleted during the last update, a callback might be
   // invoked that might cause a change in the Wifi PHY state (e.g., the PHY is put into SLEEP mode).
@@ -288,29 +276,29 @@ LrWpanRadioEnergyModel::ChangeState (int newState)
   // ensures that previous instances do not change m_currentState.
 
   if (m_nPendingChangeState <= 1)
-    {
+  {
     if(newState == IEEE_802_15_4_PHY_FORCE_TRX_OFF)
-      m_totalEnergyDepleated = true;
+      EnergyDepletionEventReceived();
 
-      // update current state & last update time stamp
-      SetLrWpanRadioState (newState);
+    // update current state & last update time stamp
+    SetLrWpanRadioState (newState);
 
-      // some debug message
-      NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Total energy consumption is " <<
-                    m_totalEnergyConsumption << "J");
-    }
-
+    // some debug message
+    NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Total energy consumption is " <<
+                  m_totalEnergyConsumption << "J");
+  }
   m_nPendingChangeState--;
 }
 
 void
 LrWpanRadioEnergyModel::HandleEnergyDepletion (void)
 {
-  NS_LOG_FUNCTION (this);
-  NS_LOG_DEBUG ("LrWpanRadioEnergyModel:Energy is depleted!");
-  // invoke energy depletion callback, if set.
+}
+
+void
+LrWpanRadioEnergyModel::EnergyDepletionEventReceived (void)
+{
   m_totalEnergyDepleated = true;
-  m_totalEnergyConsumption = m_source->GetInitialEnergy();
 
 
   if (!m_energyDepletionCallback.IsNull ())
@@ -456,6 +444,7 @@ LrWpanRadioEnergyModelPhyListener::NotifyRxStart (Time duration)
     }
   m_changeStateCallback (IEEE_802_15_4_PHY_BUSY_RX);
   m_switchToIdleEvent.Cancel ();
+  m_switchToIdleEvent = Simulator::Schedule (duration, &LrWpanRadioEnergyModelPhyListener::NotifyRxOn, this);
 }
 
 void
@@ -467,6 +456,7 @@ LrWpanRadioEnergyModelPhyListener::NotifyRxEndOk (void)
       NS_FATAL_ERROR ("LrWpanRadioEnergyModelPhyListener:Change state callback not set!");
     }
   m_changeStateCallback (IEEE_802_15_4_PHY_RX_ON);
+  m_switchToIdleEvent.Cancel ();
 }
 
 void
@@ -478,6 +468,7 @@ LrWpanRadioEnergyModelPhyListener::NotifyRxEndError (void)
       NS_FATAL_ERROR ("LrWpanRadioEnergyModelPhyListener:Change state callback not set!");
     }
   m_changeStateCallback (IEEE_802_15_4_PHY_RX_ON);
+  m_switchToIdleEvent.Cancel ();
 }
 
 void
@@ -496,7 +487,7 @@ LrWpanRadioEnergyModelPhyListener::NotifyTxStart (Time duration, double txPowerD
   m_changeStateCallback (IEEE_802_15_4_PHY_BUSY_TX);
   // schedule changing state back to IDLE after TX duration
   m_switchToIdleEvent.Cancel ();
-  m_switchToIdleEvent = Simulator::Schedule (duration, &LrWpanRadioEnergyModelPhyListener::SwitchToRxOn, this);
+  m_switchToIdleEvent = Simulator::Schedule (duration, &LrWpanRadioEnergyModelPhyListener::NotifyRxOn, this);
 }
 
 void
@@ -519,7 +510,20 @@ LrWpanRadioEnergyModelPhyListener::NotifyTxOffRxOff (void)
     {
       NS_FATAL_ERROR ("LrWpanRadioEnergyModelPhyListener:Change state callback not set!");
     }
+  m_changeStateCallback (IEEE_802_15_4_PHY_TRX_OFF);
+  m_switchToIdleEvent.Cancel ();
+}
+
+void
+LrWpanRadioEnergyModelPhyListener::NotifyTxOffRxOffByForce (void)
+{
+  NS_LOG_FUNCTION (this);
+  if (m_changeStateCallback.IsNull ())
+    {
+      NS_FATAL_ERROR ("LrWpanRadioEnergyModelPhyListener:Change state callback not set!");
+    }
   m_changeStateCallback (IEEE_802_15_4_PHY_FORCE_TRX_OFF);
+  m_switchToIdleEvent.Cancel ();
 }
 
 void
@@ -532,17 +536,6 @@ LrWpanRadioEnergyModelPhyListener::NotifyRxOn (void)
     }
   m_changeStateCallback (IEEE_802_15_4_PHY_RX_ON);
   m_switchToIdleEvent.Cancel ();
-}
-
-void
-LrWpanRadioEnergyModelPhyListener::SwitchToRxOn (void) // this is the basic state of the Lr-Wpan implementation
-{
-  NS_LOG_FUNCTION (this);
-  if (m_changeStateCallback.IsNull ())
-    {
-      NS_FATAL_ERROR ("LrWpanRadioEnergyModelPhyListener:Change state callback not set!");
-    }
-  m_changeStateCallback (IEEE_802_15_4_PHY_RX_ON);
 }
 
 } // namespace ns3

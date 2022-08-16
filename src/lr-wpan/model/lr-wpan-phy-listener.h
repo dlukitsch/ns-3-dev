@@ -28,6 +28,7 @@ public:
   virtual void NotifyTxStart (Time duration, double txPowerDbm) = 0;
 
   virtual void NotifyTxOffRxOff (void) = 0;
+  virtual void NotifyTxOffRxOffByForce (void) = 0;
   virtual void NotifyRxOn (void) = 0;
   virtual void NotifyTxOn (void) = 0;
 };

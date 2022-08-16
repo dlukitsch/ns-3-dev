@@ -52,6 +52,7 @@ public:
   void NotifyTxStart (Time duration, double txPowerDbm) override;
   void NotifyTxOn (void) override;
   void NotifyTxOffRxOff (void) override;
+  void NotifyTxOffRxOffByForce (void) override;
   void NotifyRxOn (void) override;
 
 
@@ -250,6 +251,8 @@ public:
    * Implements DeviceEnergyModel::HandleEnergyDepletion
    */
   void HandleEnergyDepletion (void);
+
+  void EnergyDepletionEventReceived (void);
 
   /**
    * \brief Handles energy recharged.

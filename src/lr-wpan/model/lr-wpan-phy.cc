@@ -1068,14 +1068,14 @@ LrWpanPhy::ChangeTrxState (LrWpanPhyEnumeration newState, bool resetBattery)
       case IEEE_802_15_4_PHY_UNSUPPORTED_ATTRIBUTE:
       case IEEE_802_15_4_PHY_READ_ONLY:
       case IEEE_802_15_4_PHY_UNSPECIFIED:
+      case IEEE_802_15_4_PHY_TRX_OFF:
         i->NotifyTxOffRxOff();
         break;
       case IEEE_802_15_4_PHY_BUSY_RX:
       case IEEE_802_15_4_PHY_BUSY_TX:  // do nothing as we already notified for these states
         break;
       case IEEE_802_15_4_PHY_FORCE_TRX_OFF:
-      case IEEE_802_15_4_PHY_TRX_OFF:
-        i->NotifyTxOffRxOff();
+        i->NotifyTxOffRxOffByForce();
         break;
       case IEEE_802_15_4_PHY_RX_ON:
         i->NotifyRxOn();
@@ -1086,9 +1086,8 @@ LrWpanPhy::ChangeTrxState (LrWpanPhyEnumeration newState, bool resetBattery)
 
     }
   }
-  if(m_trxState != IEEE_802_15_4_PHY_FORCE_TRX_OFF)
-    m_trxState = newState;
-  else if(resetBattery)
+
+  if(m_trxState != IEEE_802_15_4_PHY_FORCE_TRX_OFF || resetBattery)
     m_trxState = newState;
 }
 
@@ -1517,7 +1516,9 @@ Ptr<LrWpanRadioEnergyModel> LrWpanPhy::GetLrWpanRadioEnergyModel ()
 
 void LrWpanPhy::ChangeToOffState()
 {
+  m_setTRXState.Cancel ();
   ChangeTrxState(IEEE_802_15_4_PHY_FORCE_TRX_OFF);
+  m_trxStatePending = IEEE_802_15_4_PHY_IDLE;
 }
 
 void LrWpanPhy::ResumeFromOff()
