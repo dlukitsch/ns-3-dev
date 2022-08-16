@@ -152,12 +152,10 @@ void Statistics::TransceiverStateTraceSink(LrWpanPhyEnumeration oldState, LrWpan
       break;
     case IEEE_802_15_4_PHY_BUSY_RX:
       m_RxBusy += vTimeDiff;
-      m_RxOn += vTimeDiff;
       m_TxOff += vTimeDiff;
       break;
     case IEEE_802_15_4_PHY_BUSY_TX:
       m_TxBusy += vTimeDiff;
-      m_TxOn += vTimeDiff;
       m_RxOff += vTimeDiff;
       break;
     case IEEE_802_15_4_PHY_IDLE:
@@ -450,7 +448,7 @@ std::string Statistics::GetCsvHeaderString()
   res << "Median Transmission Delay [ms]" << ",";
   res << "Variance Transmission Delay [ms]" << ",";
 
-  res << "Node LifeTime [s]" << ",";
+  res << "Node LifeTime [ms]" << ",";
   res << "Used Energy [J]" << ",";
 
   res << "Tx Off [ms]" << ",";
@@ -525,9 +523,9 @@ std::string Statistics::GetCsvStyleString()
   res << m_varianceTransmissionDelay << ",";
 
   if(m_nodeLifeTime.GetSeconds() == 0.0)
-    res << m_simEndTime << ",";
+    res << m_simEndTime*1000 << ",";
   else
-    res << m_nodeLifeTime.GetSeconds() << ",";
+    res << m_nodeLifeTime.GetMilliSeconds() << ",";
 
   res << m_energyUsage << ",";
 
