@@ -669,16 +669,6 @@ void RoutingProtocol::SendControlMessage(Ipv6Address controlDomain)
     return;
   }
 
-  // increase the Control-Retransmission counter
-  it->second.second++;
-
-  if(it->second.second == m_TrickleTimerExpirationsControl)
-  {
-    NS_LOG_DEBUG("Disable control timer retransmissions reached");
-    it->second.first->Stop();
-    it->second.second = 0;
-  }
-
   Ptr<Packet> controlMessage = Create<Packet>();
   Ptr<Icmpv6L4Protocol> icmpL4 = m_myAddress->GetObject<Icmpv6L4Protocol>();
   Icmpv6Header icmpHeader;
@@ -688,15 +678,22 @@ void RoutingProtocol::SendControlMessage(Ipv6Address controlDomain)
     NS_LOG_ERROR ("No ICMPL4 Object found!");
     return;
   }
+
+  // increase the Control-Retransmission counter
+  it->second.second++;
+
   auto control_it = m_controlTimers.find(controlDomain);
-  if(control_it != m_controlTimers.end())
+  if(control_it != m_controlTimers.end() && it->second.second >= m_TrickleTimerExpirationsControl)
   {
     NS_LOG_DEBUG("Control Expirations reached --> disabling Control Trickle");
     control_it->second.first->Stop();
     control_it->second.second = 0;
   }
-  else
+  else if(control_it == m_controlTimers.end())
     NS_LOG_DEBUG("No Trickle Timer found --> cannot stop");
+  else
+    NS_LOG_DEBUG("Normal handling if control message");
+
 
   icmpHeader.SetCode(ICMP_CODE);
   icmpHeader.SetType(ICMP_TYPE);
