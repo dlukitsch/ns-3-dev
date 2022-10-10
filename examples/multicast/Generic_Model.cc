@@ -26,6 +26,8 @@
 
 using namespace ns3;
 
+#define IPV6_PREFIX "2001::"
+
 static const std::string filename = "Generic_Model";
 
 NS_LOG_COMPONENT_DEFINE (filename);
@@ -209,7 +211,8 @@ int main (int argc, char *argv[])
           basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (initialNodeEnergy));
           basicSourceHelper.Set ("PeriodicEnergyUpdateInterval", TimeValue (Simulator::GetMaximumSimulationTime())); // do not reload the battery
           EnergySourceContainer source = basicSourceHelper.Install(nodes.Get(it->first));
-          LrWpanRadioEnergyModelHelper radioEnergyHelper;          DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (devContainer.Get(it->first), source);
+          LrWpanRadioEnergyModelHelper radioEnergyHelper;
+          DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install (devContainer.Get(it->first), source);
         }
         /***************************************************************************/
 
@@ -232,6 +235,7 @@ int main (int argc, char *argv[])
     /* Install IPv4/IPv6 stack */
     NS_LOG_INFO ("Install Internet stack.");
     InternetStackHelper internetv6;
+    internetv6.SetIpv4StackInstall(false);
 
     // Install IPv6 Stack on all nodes without MPL and without adov
     for(auto it = topology.begin(); it != topology.end(); it++)
@@ -279,12 +283,14 @@ int main (int argc, char *argv[])
     // Install 6LowPan layer
     NS_LOG_INFO ("Install 6LoWPAN.");
     SixLowPanHelper sixlowpan;
-    sixlowpan.SetDeviceAttribute("Rfc6282", BooleanValue(false));
+    //sixlowpan.SetDeviceAttribute("Rfc6282", BooleanValue(false));
     NetDeviceContainer six1 = sixlowpan.Install (devContainer);
+    sixlowpan.AddContext (six1, 0, Ipv6Prefix ("2001::", 64), Time (Seconds (simEndTime)));
 
     NS_LOG_INFO ("Assign addresses.");
     Ipv6AddressHelper ipv6;
-    Ipv6InterfaceContainer interfaces = ipv6.AssignWithoutAddress(six1);
+    ipv6.SetBase(Ipv6Address(IPV6_PREFIX), Ipv6Prefix(64));
+    Ipv6InterfaceContainer interfaces = ipv6.Assign(six1);
 
     lrWpanHelper.AssociateToPan (panIDContainers[1], 9);
     lrWpanHelper.AssociateToPan (panIDContainers[0], 10);
@@ -307,7 +313,7 @@ int main (int argc, char *argv[])
 
       if(std::get<3>(it->second) == -1 && std::get<4>(it->second) == -1) // check if it is not an interference sender/receiver
       {
-        NS_LOG_INFO("Normal: Interface " << 0 << " Local-Link-IPv6: " << interfaces.GetLinkLocalAddress(nodeIndex));
+        NS_LOG_INFO("Normal: Interface " << 0 << " IPv6-Address: " << interfaces.GetAddress(nodeIndex, 1));
 
         // handle the protocol specific configurations here
         if(protocol == "Mpl")
@@ -343,7 +349,7 @@ int main (int argc, char *argv[])
             clientHelper.SetAttribute("RemoteAddress", AddressValue (Ipv6Address("FF03::FC")));
           else if(protocol == "Flooding")
           {
-            clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetLinkLocalAddress(std::get<1>(it->second))));
+            clientHelper.SetAttribute("RemoteAddress", AddressValue (interfaces.GetAddress(std::get<1>(it->second), 0)));
           }
           else
           {
@@ -379,11 +385,11 @@ int main (int argc, char *argv[])
 
         nodes.Get(nodeIndex)->GetObject<Ipv6L3Protocol>()->SetAttribute ("SendIcmpv6Redirect", BooleanValue (false));
 
-        NS_LOG_INFO("Int: Interface " << 0 << " Local-Link-IPv6: " << interfaces.GetLinkLocalAddress(nodeIndex));
+        NS_LOG_INFO("Int: Interface " << 0 << " IPv6-Address: " << interfaces.GetAddress(nodeIndex, 1));
 
         if(std::get<3>(it->second) != -1) // handle interference sender
         {
-          clientHelper.SetAttribute("RemoteAddress",  AddressValue(interfaces.GetLinkLocalAddress(std::get<3>(it->second))));
+          clientHelper.SetAttribute("RemoteAddress",  AddressValue(interfaces.GetAddress(std::get<3>(it->second), 0)));
           clientHelper.SetAttribute("RemotePort", UintegerValue(9));
           clientHelper.SetAttribute("PacketSize", UintegerValue(interferPacketSize));
           clientHelper.SetAttribute("MaxPackets", UintegerValue(UINT32_MAX));
@@ -409,8 +415,6 @@ int main (int argc, char *argv[])
     apps.Stop (Seconds(simEndTime));
 
     AnimationInterface anim (path + filename + ".xml");
-    anim.EnablePacketMetadata (); // Optional
-
     NS_LOG_INFO ("Start Run " << simRun << "/" << numRuns << " of " << simName);
 
     Simulator::Stop(Seconds(simEndTime));
