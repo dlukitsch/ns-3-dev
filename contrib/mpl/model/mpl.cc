@@ -198,16 +198,9 @@ bool RoutingProtocol::RouteInput  (Ptr<const Packet> p, const Ipv6Header &header
 {
   Ptr<Packet> pCopy = p->Copy();
   Ipv6Address dst = header.GetDestinationAddress();
-  Ipv6Address src = header.GetSourceAddress();
   uint8_t bytes[16];
-  uint8_t srcBytes[16];
 
   dst.GetBytes(bytes);
-  src.GetBytes(srcBytes);
-
-  //Correct the bug with the wrong received IPv6-Address, where bytes[2]-[5] are set completely randomly to any value without any reason
-  memset(&srcBytes[2], 0, 4); // reset them back to zero as they should be
-  const_cast<Ipv6Header&>(header).SetSourceAddress(Ipv6Address(srcBytes));
 
   if(!dst.IsMulticast())
   {
@@ -384,7 +377,7 @@ Ptr<Ipv6Route> RoutingProtocol::FindRoute(Ipv6Address mplDomain, Ipv6Address sou
     route = Create<Ipv6Route>();
     route->SetDestination(mplDomain);
 
-    Ipv6InterfaceAddress x(m_myAddress->GetAddress(definedInterface, 0)); // get the link-local address of the interface
+    Ipv6InterfaceAddress x(m_myAddress->GetAddress(definedInterface, 1));
 
     if(sourceAddress == Ipv6Address::GetZero())
       route->SetSource(x.GetAddress());
