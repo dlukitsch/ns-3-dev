@@ -186,7 +186,7 @@ void Statistics::TxEndDropTraceSink (Ptr<const Packet> packet)
 {
   Ptr<Packet> copyPacket = packet->Copy();
 
-  if(!CheckIfInterferenceMessage(copyPacket))
+  if(CheckIfInterferenceMessage(copyPacket))
     return;
 
   m_numSentDropPackets++;
@@ -208,7 +208,7 @@ void Statistics::TxEndTraceSink(Ptr<const Packet> packet)
 {
   Ptr<Packet> copyPacket = packet->Copy();
 
-  if(!CheckIfInterferenceMessage(copyPacket))
+  if(CheckIfInterferenceMessage(copyPacket))
     return;
 
   m_numSentPackets++;
@@ -244,7 +244,7 @@ void Statistics::RxEndTraceSink (Ptr<const Packet> packet, double SINR)
 {
   Ptr<Packet> copyPacket = packet->Copy();
 
-  if(!CheckIfInterferenceMessage(copyPacket))
+  if(CheckIfInterferenceMessage(copyPacket))
     return;
 
   m_numRecPackets++;
@@ -283,7 +283,7 @@ void Statistics::RxEndDropTraceSink (Ptr<const Packet> packet)
 {
   Ptr<Packet> copyPacket = packet->Copy();
 
-  if(!CheckIfInterferenceMessage(copyPacket))
+  if(CheckIfInterferenceMessage(copyPacket))
     return;
 
   m_numRxDropPackets++;
@@ -315,34 +315,13 @@ bool Statistics::TryToInsertPacket(Ptr<Packet> packet)
 // Determines if a given Message is a Data-Message or not (currently only MPL and Flooding supported)
 bool Statistics::IsDataMessage(Ptr<Packet> packet)
 {
-  std::ostringstream oss;
-  packet->Print(oss); // Get the general structure of the packet
-
-  if(oss.str().find("ns3::Icmpv6Header") != std::string::npos)
-  {
-    return false;
-  }
-
-  return true;
+  return packet->GetSize() == 52 || packet->GetSize()  == 54 || packet->GetSize() == 50; // sizes of mpl and flooding data-packets
 }
 
 // check the destination and source PAN-IDs to distinguish between the interference messages and valid messages
 bool Statistics::CheckIfInterferenceMessage(Ptr<Packet> packet)
 {
-  std::ostringstream oss;
-  packet->Print(oss); // Get the general structure of the packet
-
-  if(oss.str().find("LrWpanMacHeader") == std::string::npos)
-    return false;
-
-  LrWpanMacHeader lrWpanHeader;
-  packet->PeekHeader(lrWpanHeader);
-
-  // The interference Networks have a PAN-ID != 10
-  if(lrWpanHeader.GetDstPanId() != 10 || lrWpanHeader.GetSrcPanId() != 10)
-    return false;
-
-  return true;
+  return packet->GetSize() == 82; // sizes of interference packets is 82
 }
 
 void Statistics::CalculateDelayTimes()
