@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 sns.set_theme(style="dark")
 
-sim_data = pd.read_csv("../output/Line_10_Flooding/results_median.csv")
+sim_data = pd.read_csv("../output/Line_10_Mpl_4D1C/results_median.csv")
 pos_data = pd.read_csv("../examples/multicast/Line_10.csv")
 sim_data['x'] = pos_data['x']
 sim_data['y'] = pos_data['y'] 
@@ -28,6 +28,5 @@ h = sns.barplot(data=graphdata, x ='Node', y = '# Sent Packets', hue = 'Packets'
 h.legend_.set_title(None)
 h.set(ylim=(0,450))
 
-
 #plt.show()
-h.figure.savefig("barplot_10_Line_Flooding.pdf",  bbox_inches='tight', dpi=300)
+h.figure.savefig("barplot_10_Line_MPL_4D1C.pdf",  bbox_inches='tight', dpi=300)

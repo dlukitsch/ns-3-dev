@@ -6,8 +6,13 @@ Generic_Model,5,Mpl,Line_3_Mpl_2D2C,./examples/multicast/Line_3.csv,fixed,1234,2
 Generic_Model,5,Flooding,Line_3_Flooding,./examples/multicast/Line_3.csv,fixed,1234,20,60,60000,3800,0,11,,,,,,,,,,,,,,,,125,TRUE,50000000
 Generic_Model,5,Mpl,Line_10_Mpl_1D0C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,1,3000,3,1,0,,TRUE,50000000
 Generic_Model,5,Mpl,Line_10_Mpl_2D0C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,2,3000,3,1,0,,TRUE,50000000
+Generic_Model,5,Mpl,Line_10_Mpl_3D0C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,3,3000,3,1,0,,TRUE,50000000
 Generic_Model,5,Mpl,Line_10_Mpl_1D1C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,1,3000,3,1,1,,TRUE,50000000
+Generic_Model,5,Mpl,Line_10_Mpl_2D1C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Mpl,Line_10_Mpl_2D2C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,2,,TRUE,50000000
+Generic_Model,5,Mpl,Line_10_Mpl_4D1C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,4,3000,3,1,1,,TRUE,50000000
+Generic_Model,5,Mpl,Line_10_Mpl_6D1C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,6,3000,3,1,1,,TRUE,50000000
+Generic_Model,5,Mpl,Line_10_Mpl_7D1C,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,7,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Flooding,Line_10_Flooding,./examples/multicast/Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,,,,,,,,,,,,125,TRUE,50000000
 Generic_Model,5,Mpl,Square_2x2_Mpl_1D0C,./examples/multicast/Square_2x2.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,1,3000,3,1,0,,TRUE,50000000
 Generic_Model,5,Mpl,Square_2x2_Mpl_2D0C,./examples/multicast/Square_2x2.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,2,3000,3,1,0,,TRUE,50000000
@@ -28,6 +33,7 @@ Generic_Model,5,Mpl,Circle_10_Mpl_1D0C,./examples/multicast/Circle_10.csv,fixed,
 Generic_Model,5,Mpl,Circle_10_Mpl_2D0C,./examples/multicast/Circle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,2,3000,3,1,0,,TRUE,50000000
 Generic_Model,5,Mpl,Circle_10_Mpl_1D1C,./examples/multicast/Circle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,1,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Mpl,Circle_10_Mpl_2D2C,./examples/multicast/Circle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,2,,TRUE,50000000
+Generic_Model,5,Mpl,Circle_10_Mpl_4D1C,./examples/multicast/Circle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,4,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Flooding,Circle_10_Flooding,./examples/multicast/Circle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,,,,,,,,,,,,125,TRUE,50000000
 Generic_Model,5,Mpl,RandomLine_10_Mpl_1D0C,./examples/multicast/Random_Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,1,3000,3,1,0,,TRUE,50000000
 Generic_Model,5,Mpl,RandomLine_10_Mpl_2D0C,./examples/multicast/Random_Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,FALSE,30,1000,3,1,2,3000,3,1,0,,TRUE,50000000
@@ -53,3 +59,4 @@ Generic_Model,5,Mpl,Circle_10_Mpl_2D1C,./examples/multicast/Circle_10.csv,fixed,
 Generic_Model,5,Mpl,RandomLine_10_Mpl_2D1C,./examples/multicast/Random_Line_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Mpl,RandomRectangle_5_Mpl_2D1C,./examples/multicast/Random_Rectangle_5.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,1,,TRUE,50000000
 Generic_Model,5,Mpl,RandomRectangle_10_Mpl_2D1C,./examples/multicast/Random_Rectangle_10.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,2,3000,3,1,1,,TRUE,50000000
+Generic_Model,5,Mpl,Square_5x5_Mpl_4D1C,./examples/multicast/Square_5x5.csv,fixed,1234,20,60,60000,3800,0,11,,,,,TRUE,TRUE,30,1000,3,1,4,3000,3,1,1,,TRUE,50000000

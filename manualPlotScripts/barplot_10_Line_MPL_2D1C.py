@@ -26,9 +26,8 @@ sns.set(style="ticks")
 sns.set_style("darkgrid", {'axes.grid' : True})
 h = sns.barplot(data=graphdata, x ='Node', y = '# Sent Packets', hue = 'Packets')
 h.legend_.set_title(None)
+h.set(ylim=(0,450))
 
-for i in h.containers:
-    h.bar_label(i, size=5.5)
 
 #plt.show()
 h.figure.savefig("barplot_10_Line_MPL_2D1C.pdf",  bbox_inches='tight', dpi=300)
